@@ -15,36 +15,59 @@
     <nav class="bg-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center py-4">
-                <a href="/" class="text-2xl font-bold text-blue-600">Wegatsaucee Fashion Hub</a>
-                <div class="flex items-center space-x-4">
+                <a href="/" class="text-xl md:text-2xl font-bold text-blue-600">Wegatsaucee</a>
+                <button onclick="toggleMenu()" class="md:hidden text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <div id="nav-menu" class="hidden md:flex items-center space-x-4">
                     {% if session.admin_logged_in and request.path.startswith('/admin') %}
-                        <span class="text-gray-600 text-sm">Admin Panel</span>
-                        <a href="/admin" class="text-gray-700 hover:text-red-600">Dashboard</a>
-                        <a href="/admin/upload" class="text-gray-700 hover:text-red-600">Add Product</a>
-                        <a href="/" class="text-gray-700 hover:text-red-600">View Shop</a>
-                        <a href="/admin/logout" class="text-gray-700 hover:text-red-600">Logout</a>
+                        <a href="/admin" class="text-gray-700 hover:text-red-600 text-sm">Dashboard</a>
+                        <a href="/admin/upload" class="text-gray-700 hover:text-red-600 text-sm">Add Product</a>
+                        <a href="/" class="text-gray-700 hover:text-red-600 text-sm">View Shop</a>
+                        <a href="/admin/logout" class="text-gray-700 hover:text-red-600 text-sm">Logout</a>
                     {% elif session.user_id %}
-                        <span class="text-gray-600 text-sm">Welcome, <span class="font-semibold text-orange-600">{{ current_user.name if current_user else 'User' }}</span></span>
-                        <a href="/dashboard" class="text-gray-700 hover:text-red-600">Dashboard</a>
-                        <a href="/products" class="text-gray-700 hover:text-red-600">Shop</a>
-                        <a href="/cart" class="text-gray-700 hover:text-red-600 relative">
+                        <a href="/dashboard" class="text-gray-700 hover:text-red-600 text-sm">Dashboard</a>
+                        <a href="/products" class="text-gray-700 hover:text-red-600 text-sm">Shop</a>
+                        <a href="/cart" class="text-gray-700 hover:text-red-600 relative text-sm">
                             Cart
                             <span id="cart-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
                         </a>
-                        <a href="/profile" class="text-gray-700 hover:text-red-600">Profile</a>
-                        <a href="#" onclick="showTrackModal()" class="text-gray-700 hover:text-red-600">Track Order</a>
-                        <a href="/logout" class="text-gray-700 hover:text-red-600">Logout</a>
+                        <a href="#" onclick="showTrackModal()" class="text-gray-700 hover:text-red-600 text-sm">Track</a>
+                        <a href="/logout" class="text-gray-700 hover:text-red-600 text-sm">Logout</a>
                     {% else %}
-                        <a href="/" class="text-gray-700 hover:text-red-600">Home</a>
-                        <a href="/products" class="text-gray-700 hover:text-red-600">Products</a>
-                        <a href="/cart" class="text-gray-700 hover:text-red-600 relative">
+                        <a href="/" class="text-gray-700 hover:text-red-600 text-sm">Home</a>
+                        <a href="/products" class="text-gray-700 hover:text-red-600 text-sm">Products</a>
+                        <a href="/cart" class="text-gray-700 hover:text-red-600 relative text-sm">
                             Cart
                             <span id="cart-badge-guest" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
                         </a>
-                        <a href="/login" class="text-gray-700 hover:text-red-600">Login</a>
-                        <a href="/register" class="text-gray-700 hover:text-red-600">Register</a>
+                        <a href="/login" class="text-gray-700 hover:text-red-600 text-sm">Login</a>
+                        <a href="/register" class="text-gray-700 hover:text-red-600 text-sm">Register</a>
                     {% endif %}
                 </div>
+            </div>
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                {% if session.admin_logged_in and request.path.startswith('/admin') %}
+                    <a href="/admin" class="block py-2 text-gray-700 hover:text-red-600">Dashboard</a>
+                    <a href="/admin/upload" class="block py-2 text-gray-700 hover:text-red-600">Add Product</a>
+                    <a href="/" class="block py-2 text-gray-700 hover:text-red-600">View Shop</a>
+                    <a href="/admin/logout" class="block py-2 text-gray-700 hover:text-red-600">Logout</a>
+                {% elif session.user_id %}
+                    <span class="block py-2 text-orange-600 font-semibold">{{ current_user.name if current_user else 'User' }}</span>
+                    <a href="/dashboard" class="block py-2 text-gray-700 hover:text-red-600">Dashboard</a>
+                    <a href="/products" class="block py-2 text-gray-700 hover:text-red-600">Shop</a>
+                    <a href="/cart" class="block py-2 text-gray-700 hover:text-red-600">Cart</a>
+                    <a href="#" onclick="showTrackModal()" class="block py-2 text-gray-700 hover:text-red-600">Track Order</a>
+                    <a href="/logout" class="block py-2 text-gray-700 hover:text-red-600">Logout</a>
+                {% else %}
+                    <a href="/" class="block py-2 text-gray-700 hover:text-red-600">Home</a>
+                    <a href="/products" class="block py-2 text-gray-700 hover:text-red-600">Products</a>
+                    <a href="/cart" class="block py-2 text-gray-700 hover:text-red-600">Cart</a>
+                    <a href="/login" class="block py-2 text-gray-700 hover:text-red-600">Login</a>
+                    <a href="/register" class="block py-2 text-gray-700 hover:text-red-600">Register</a>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -79,18 +102,18 @@
     </div>
 
     <script>
+    function toggleMenu() {
+        document.getElementById('mobile-menu').classList.toggle('hidden');
+    }
     function showTrackModal() {
         document.getElementById('trackModal').classList.remove('hidden');
     }
     function hideTrackModal() {
         document.getElementById('trackModal').classList.add('hidden');
     }
-    
-    // Update cart badge
     function updateCartBadge() {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-        
         const badge = document.getElementById('cart-badge') || document.getElementById('cart-badge-guest');
         if (badge) {
             if (totalItems > 0) {
@@ -101,8 +124,6 @@
             }
         }
     }
-    
-    // Update badge on page load
     document.addEventListener('DOMContentLoaded', updateCartBadge);
     </script>
 </body>
