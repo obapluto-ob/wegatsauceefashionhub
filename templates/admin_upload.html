@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
+    <h2 class="text-3xl font-bold mb-8 text-center text-gray-800">Add New Product</h2>
+    
+    <form method="POST" action="/admin/add_product" enctype="multipart/form-data">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Product Name</label>
+                <input type="text" name="name" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Price (KSh)</label>
+                <input type="number" name="price" step="0.01" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Category</label>
+                <select name="category" required 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
+                    <option value="">Select Category</option>
+                    <option value="dresses">Dresses</option>
+                    <option value="tops">Tops & Blouses</option>
+                    <option value="trousers">Trousers</option>
+                    <option value="belts">Belts</option>
+                    <option value="accessories">Bags & Accessories</option>
+                    <option value="shoes">Shoes</option>
+                    <option value="bottoms">Bottoms</option>
+                    <option value="suits">Suits</option>
+                    <option value="shirts">Shirts</option>
+                    <option value="pants">Pants</option>
+                    <option value="jackets">Jackets</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Gender</label>
+                <select name="gender" required 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
+                    <option value="">Select Gender</option>
+                    <option value="women">Women</option>
+                    <option value="men">Men</option>
+                    <option value="unisex">Unisex</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Stock Quantity</label>
+                <input type="number" name="stock" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
+            </div>
+        </div>
+        
+        <div class="mt-6">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Product Description</label>
+            <textarea name="description" rows="4" 
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      placeholder="Write detailed product description..."></textarea>
+        </div>
+        
+        <div class="mt-6">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Product Images</label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                <input type="file" name="images" id="imageInput" accept="image/*" multiple 
+                       class="hidden" onchange="previewImages(event)">
+                <div class="flex space-x-2">
+                    <button type="button" onclick="document.getElementById('imageInput').click()" 
+                            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-lg transition-all">
+                        Click to Add Images
+                    </button>
+                    <button type="button" onclick="clearAllImages()" 
+                            class="bg-red-100 hover:bg-red-200 text-red-700 py-3 px-4 rounded-lg transition-all">
+                        Clear All
+                    </button>
+                </div>
+                <p class="text-xs text-gray-600 mt-2 text-center">Max 5 images, 2MB each (JPG, PNG)</p>
+                
+                <!-- Image Preview Area -->
+                <div id="imagePreview" class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 hidden">
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-6">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Product Videos (Optional)</label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                <input type="file" name="videos" id="videoInput" accept="video/*" multiple 
+                       class="hidden" onchange="previewVideos(event)">
+                <div class="flex space-x-2">
+                    <button type="button" onclick="document.getElementById('videoInput').click()" 
+                            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-lg transition-all">
+                        Click to Add Videos
+                    </button>
+                    <button type="button" onclick="clearAllVideos()" 
+                            class="bg-red-100 hover:bg-red-200 text-red-700 py-3 px-4 rounded-lg transition-all">
+                        Clear All
+                    </button>
+                </div>
+                <p class="text-xs text-gray-600 mt-2 text-center">Max 2 videos, 10MB each (MP4, MOV)</p>
+                
+                <!-- Video Preview Area -->
+                <div id="videoPreview" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 hidden">
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 flex space-x-4">
+            <button type="submit" 
+                    class="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-6 rounded-lg hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 font-semibold shadow-lg">
+                Add Product
+            </button>
+            <a href="/admin" 
+               class="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-400 transition-all text-center font-semibold">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+let selectedImages = [];
+let selectedVideos = [];
+
+function previewImages(event) {
+    const files = Array.from(event.target.files);
+    selectedImages = [...selectedImages, ...files.filter(file => {
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Image ' + file.name + ' is too large. Max 2MB allowed.');
+            return false;
+        }
+        if (selectedImages.length >= 5) {
+            alert('Maximum 5 images allowed.');
+            return false;
+        }
+        return true;
+    })];
+    
+    refreshImagePreview();
+}
+
+function previewVideos(event) {
+    const files = Array.from(event.target.files);
+    const preview = document.getElementById('videoPreview');
+    
+    files.forEach((file, index) => {
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Video ' + file.name + ' is too large. Max 10MB allowed.');
+            return;
+        }
+        
+        if (selectedVideos.length >= 2) {
+            alert('Maximum 2 videos allowed.');
+            return;
+        }
+        
+        selectedVideos.push(file);
+        
+        const div = document.createElement('div');
+        div.className = 'relative';
+        div.innerHTML = `
+            <div class="bg-gray-200 h-24 rounded flex items-center justify-center">
+                <span class="text-gray-600 text-sm">${file.name}</span>
+            </div>
+            <button type="button" onclick="removeVideo(${selectedVideos.length - 1})" 
+                    class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs hover:bg-red-600">
+                ×
+            </button>
+        `;
+        preview.appendChild(div);
+    });
+    
+    if (selectedVideos.length > 0) {
+        preview.classList.remove('hidden');
+    }
+}
+
+function removeImage(index) {
+    selectedImages.splice(index, 1);
+    updateFileInput('imageInput', selectedImages);
+    refreshImagePreview();
+}
+
+function removeVideo(index) {
+    selectedVideos.splice(index, 1);
+    updateFileInput('videoInput', selectedVideos);
+    refreshVideoPreview();
+}
+
+function updateFileInput(inputId, files) {
+    const input = document.getElementById(inputId);
+    const dt = new DataTransfer();
+    files.forEach(file => dt.items.add(file));
+    input.files = dt.files;
+}
+
+function refreshImagePreview() {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    
+    if (selectedImages.length === 0) {
+        preview.classList.add('hidden');
+        return;
+    }
+    
+    selectedImages.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'relative';
+            div.innerHTML = `
+                <img src="${e.target.result}" class="w-full h-24 object-cover rounded">
+                <button type="button" onclick="removeImage(${index})" 
+                        class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs hover:bg-red-600">
+                    ×
+                </button>
+            `;
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function refreshVideoPreview() {
+    const preview = document.getElementById('videoPreview');
+    preview.innerHTML = '';
+    
+    if (selectedVideos.length === 0) {
+        preview.classList.add('hidden');
+        return;
+    }
+    
+    selectedVideos.forEach((file, index) => {
+        const div = document.createElement('div');
+        div.className = 'relative';
+        div.innerHTML = `
+            <div class="bg-gray-200 h-24 rounded flex items-center justify-center">
+                <span class="text-gray-600 text-sm">${file.name}</span>
+            </div>
+            <button type="button" onclick="removeVideo(${index})" 
+                    class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs hover:bg-red-600">
+                ×
+            </button>
+        `;
+        preview.appendChild(div);
+    });
+}
+
+function clearAllImages() {
+    selectedImages = [];
+    document.getElementById('imageInput').value = '';
+    document.getElementById('imagePreview').innerHTML = '';
+    document.getElementById('imagePreview').classList.add('hidden');
+}
+
+function clearAllVideos() {
+    selectedVideos = [];
+    document.getElementById('videoInput').value = '';
+    document.getElementById('videoPreview').innerHTML = '';
+    document.getElementById('videoPreview').classList.add('hidden');
+}
+</script>
+{% endblock %}

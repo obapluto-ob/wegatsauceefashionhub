@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <h1 class="text-3xl font-bold">Order Management</h1>
+                <a href="{{ url_for('admin_dashboard') }}" class="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100">
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Orders List -->
+        <div class="max-w-7xl mx-auto p-6">
+            {% for order in orders %}
+            <div class="bg-white rounded-lg shadow-md p-6 mb-4">
+                <!-- Order Header -->
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold">
+                            Order #{{ order.id }}
+                            {% if order.user.tier == 'platinum' %}
+                            <span class="text-purple-600">[PLATINUM VIP]</span>
+                            {% elif order.user.tier == 'gold' %}
+                            <span class="text-yellow-600">[GOLD]</span>
+                            {% elif order.user.tier == 'silver' %}
+                            <span class="text-gray-500">[SILVER]</span>
+                            {% else %}
+                            <span class="text-orange-600">[BRONZE]</span>
+                            {% endif %}
+                        </h3>
+                        <p class="text-gray-600">{{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-2xl font-bold text-purple-600">KSh {{ "{:,.0f}".format(order.total) }}</p>
+                        <p class="text-sm text-gray-600">{{ order.user.points }} points</p>
+                    </div>
+                </div>
+
+                <!-- Customer Info -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h4 class="font-bold mb-2">Customer Details</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">Name</p>
+                            <p class="font-semibold">{{ order.user.name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Phone</p>
+                            <p class="font-semibold">{{ order.user.phone }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Email</p>
+                            <p class="font-semibold">{{ order.user.email }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="mb-4">
+                    <h4 class="font-bold mb-2">Products</h4>
+                    {% set items = order.items|from_json %}
+                    <div class="space-y-2">
+                        {% for item in items %}
+                        <div class="flex items-center gap-4 p-2 bg-gray-50 rounded">
+                            {% if item.image_url %}
+                            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-16 h-16 object-cover rounded">
+                            {% else %}
+                            <div class="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                                <span class="text-gray-400 text-xs">No Image</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex-1">
+                                <p class="font-semibold">{{ item.name }}</p>
+                                <p class="text-sm text-gray-600">Quantity: {{ item.quantity }}</p>
+                            </div>
+                            <p class="font-bold">KSh {{ "{:,.0f}".format(item.price * item.quantity) }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                    <div class="space-y-1">
+                        <div class="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>KSh {{ "{:,.0f}".format(order.total - order.shipping_fee - order.commission) }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Shipping:</span>
+                            <span>KSh {{ "{:,.0f}".format(order.shipping_fee) }}
+                                {% if order.shipping_fee == 0 %}
+                                <span class="text-green-600 text-sm">(FREE - Tier Benefit)</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="flex justify-between text-green-600">
+                            <span>Your Commission (10%):</span>
+                            <span class="font-bold">KSh {{ "{:,.0f}".format(order.commission) }}</span>
+                        </div>
+                        <div class="flex justify-between text-lg font-bold border-t pt-2">
+                            <span>Total:</span>
+                            <span>KSh {{ "{:,.0f}".format(order.total) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Status -->
+                <div class="flex gap-4 items-center">
+                    <form action="{{ url_for('admin_update_order_status') }}" method="POST" class="flex-1">
+                        <input type="hidden" name="order_id" value="{{ order.id }}">
+                        <div class="flex gap-2">
+                            <select name="status" class="flex-1 border rounded-lg px-4 py-2">
+                                <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending Payment</option>
+                                <option value="paid" {% if order.status == 'paid' %}selected{% endif %}>Paid</option>
+                                <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>Processing</option>
+                                <option value="shipped" {% if order.status == 'shipped' %}selected{% endif %}>Shipped</option>
+                                <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                            </select>
+                            <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
+                                Update Status
+                            </button>
+                        </div>
+                    </form>
+                    <a href="{{ url_for('admin_track_order', order_id=order.id) }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                        Update Tracking
+                    </a>
+                </div>
+
+                <!-- Current Tracking -->
+                {% if order.tracking %}
+                <div class="mt-4 bg-green-50 rounded-lg p-4">
+                    <h4 class="font-bold mb-2">Latest Tracking Update</h4>
+                    {% set latest = order.tracking[-1] %}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">Location</p>
+                            <p class="font-semibold">{{ latest.location }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Transport</p>
+                            <p class="font-semibold">{{ latest.transport_company }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Driver</p>
+                            <p class="font-semibold">{{ latest.driver_name }}</p>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600">{{ latest.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Delivery Confirmation -->
+                {% if order.confirmation %}
+                <div class="mt-4 bg-yellow-50 rounded-lg p-4">
+                    <h4 class="font-bold mb-2">Delivery Confirmation</h4>
+                    <div class="flex gap-4">
+                        <img src="{{ order.confirmation.photo_url }}" alt="Delivery Photo" class="w-32 h-32 object-cover rounded">
+                        <div class="flex-1">
+                            <p class="mb-2"><strong>Rating:</strong> {{ order.confirmation.rating }}/5 stars</p>
+                            <p class="mb-2"><strong>Feedback:</strong> {{ order.confirmation.feedback }}</p>
+                            {% if not order.confirmation.confirmed_by_admin %}
+                            <form action="{{ url_for('admin_confirm_delivery') }}" method="POST" class="flex gap-2">
+                                <input type="hidden" name="confirmation_id" value="{{ order.confirmation.id }}">
+                                <input type="number" name="admin_rating" min="1" max="5" placeholder="Rate customer (1-5)" class="border rounded px-3 py-1" required>
+                                <button type="submit" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">
+                                    Confirm & Rate Customer
+                                </button>
+                            </form>
+                            {% else %}
+                            <p class="text-green-600 font-bold">Confirmed by Admin</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            {% if not orders %}
+            <div class="bg-white rounded-lg shadow-md p-12 text-center">
+                <p class="text-gray-500 text-lg">No orders yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

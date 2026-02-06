@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section with Background -->
+<div class="relative bg-gradient-to-br from-purple-600 via-blue-600 to-teal-500 rounded-2xl mb-12 overflow-hidden">
+    <div class="absolute inset-0 bg-black opacity-20"></div>
+    <div class="relative text-center py-20 px-8">
+        <h1 class="text-5xl font-bold text-white mb-4 drop-shadow-lg">Wegatsaucee Fashion Hub</h1>
+        <p class="text-xl text-white mb-2 drop-shadow-md">Kenya's Premier Fashion Destination</p>
+        <p class="text-lg text-white mb-8 drop-shadow-md font-medium italic">"Look Clean • Stay Halal"</p>
+        <div class="flex justify-center space-x-4">
+            {% if session.user_id %}
+            <a href="/products" class="bg-white text-purple-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-all transform hover:scale-105">Shop Now</a>
+        {% else %}
+            <a href="/login" class="bg-white text-purple-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-all transform hover:scale-105">View Prices</a>
+        {% endif %}
+            <a href="/register" class="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-purple-600 transition-all">Join Us</a>
+        </div>
+    </div>
+</div>
+
+<!-- Categories Section -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
+    <a href="/products?category=dresses" class="bg-orange-100 rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all group">
+        <div class="w-20 h-20 bg-gradient-to-br from-pink-200 to-pink-400 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=80&h=80&fit=crop&crop=center" alt="Dresses" class="w-16 h-16 object-cover rounded-lg" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div class="w-16 h-16 bg-pink-500 rounded-lg hidden"></div>
+        </div>
+        <h3 class="font-semibold">Dresses</h3>
+    </a>
+    <a href="/products?category=tops" class="bg-orange-100 rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all group">
+        <div class="w-20 h-20 bg-gradient-to-br from-blue-200 to-blue-400 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <img src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=80&h=80&fit=crop&crop=center" alt="Tops" class="w-16 h-16 object-cover rounded-lg" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div class="w-16 h-16 bg-blue-500 rounded-lg hidden"></div>
+        </div>
+        <h3 class="font-semibold">Tops & Blouses</h3>
+    </a>
+    <a href="/products?category=belts" class="bg-orange-100 rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all group">
+        <div class="w-20 h-20 bg-gradient-to-br from-purple-200 to-purple-400 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <span class="text-2xl font-bold text-white">BELT</span>
+        </div>
+        <h3 class="font-semibold">Belts</h3>
+    </a>
+    <a href="/products?category=accessories" class="bg-orange-100 rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all group">
+        <div class="w-20 h-20 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <img src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=80&h=80&fit=crop&crop=center" alt="Bags" class="w-16 h-16 object-cover rounded-lg" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div class="w-16 h-16 bg-yellow-500 rounded-lg hidden"></div>
+        </div>
+        <h3 class="font-semibold">Bags</h3>
+    </a>
+    <a href="/products?category=shoes" class="bg-orange-100 rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all group">
+        <div class="w-20 h-20 bg-gradient-to-br from-green-200 to-green-400 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=80&h=80&fit=crop&crop=center" alt="Shoes" class="w-16 h-16 object-cover rounded-lg" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div class="w-16 h-16 bg-green-500 rounded-lg hidden"></div>
+        </div>
+        <h3 class="font-semibold">Shoes</h3>
+    </a>
+</div>
+
+<!-- Featured Products Section -->
+<div class="text-center mb-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">Trending Now</h2>
+    <p class="text-gray-600">Latest fashion picks</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    {% if products %}
+    {% for product in products %}
+    <div class="bg-orange-100 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-2">
+        {% if product.image_url %}
+            {% if product.image_url.startswith('[') %}
+                {# New JSON format #}
+                {% set images = product.image_url | from_json %}
+                {% if images and images|length > 0 %}
+                    <div class="relative h-48 w-full overflow-hidden rounded-t-xl">
+                        <div class="image-slider" data-product-id="{{ product.id }}">
+                            {% for image in images %}
+                            <img src="{{ image }}" alt="{{ product.name }}" class="h-48 w-full object-cover slider-image {% if loop.first %}active{% endif %}">
+                            {% endfor %}
+                        </div>
+                        
+                        {% if images|length > 1 %}
+                        <button onclick="prevImage({{ product.id }})" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-opacity-70">
+                            ‹
+                        </button>
+                        <button onclick="nextImage({{ product.id }})" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-opacity-70">
+                            ›
+                        </button>
+                        
+                        <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                            {% for image in images %}
+                            <div class="w-2 h-2 rounded-full bg-white bg-opacity-50 slider-dot {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}"></div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="h-48 bg-gradient-to-br from-orange-200 to-red-300 flex items-center justify-center">
+                        <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center shadow-lg">
+                            <div class="w-8 h-8 bg-red-500 rounded"></div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                {# Old single image format #}
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="h-48 w-full object-cover">
+            {% endif %}
+        {% else %}
+            <div class="h-48 bg-gradient-to-br from-orange-200 to-red-300 flex items-center justify-center">
+                <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center shadow-lg">
+                    <div class="w-8 h-8 bg-red-500 rounded"></div>
+                </div>
+            </div>
+        {% endif %}
+        <div class="p-5">
+            <div class="flex justify-between items-start mb-2">
+                <h3 class="text-lg font-bold text-gray-800">{{ product.name }}</h3>
+                {% if product.is_trending %}
+                <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-semibold">TRENDING</span>
+                {% endif %}
+            </div>
+            {% if product.description %}
+            <p class="text-gray-600 mb-3">{{ product.description[:60] }}{% if product.description|length > 60 %}...{% endif %}</p>
+            {% endif %}
+            {% if session.user_id %}
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-2xl font-bold text-gray-800">{{ currency }} {{ "%.2f"|format(product.display_price) }}</span>
+                    {% if currency != 'KSh' %}
+                        <span class="text-sm text-gray-500">KSh {{ product.price }}</span>
+                    {% endif %}
+                </div>
+                <button onclick="addToCart({{ product.id }})" 
+                        class="w-full bg-gradient-to-r from-red-500 to-orange-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-red-600 hover:to-orange-600 transition-all transform hover:scale-105">
+                    Add to Cart
+                </button>
+            {% else %}
+                <a href="/login" class="block w-full border-2 border-red-500 text-red-600 py-3 px-4 rounded-lg font-semibold hover:bg-red-500 hover:text-white transition-all text-center">
+                    View Price
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="col-span-4 text-center py-12">
+        <div class="text-gray-400 mb-4">
+            <svg class="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L15.09 8.26L22 9L15.09 9.74L12 16L8.91 9.74L2 9L8.91 8.26L12 2Z"/>
+            </svg>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-600 mb-2">No Trending Products</h3>
+        <p class="text-gray-500">The shop hasn't featured any trending products yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Features Section -->
+<div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="text-center p-6 bg-white rounded-xl shadow-md">
+        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M18 8H20L22 12V16H20.5C20.5 17.66 19.16 19 17.5 19S14.5 17.66 14.5 16H9.5C9.5 17.66 8.16 19 6.5 19S3.5 17.66 3.5 16H2V6C2 5.45 2.45 5 3 5H17V8ZM17 7V6H3V15H3.5C3.5 13.34 4.84 12 6.5 12S9.5 13.34 9.5 15H14.5C14.5 13.34 15.84 12 17.5 12S20.5 13.34 20.5 15H21V12.5L19.5 9H17V7ZM6.5 17C7.33 17 8 16.33 8 15.5S7.33 14 6.5 14 5 14.67 5 15.5 5.67 17 6.5 17ZM17.5 17C18.33 17 19 16.33 19 15.5S18.33 14 17.5 14 16 14.67 16 15.5 16.67 17 17.5 17Z"/>
+            </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Fast Delivery</h3>
+        <p class="text-gray-600">Kenya: 1-3 days | International: 5-10 days</p>
+    </div>
+    <div class="text-center p-6 bg-white rounded-xl shadow-md">
+        <div class="w-20 h-12 bg-white rounded-lg flex items-center justify-center mx-auto mb-3 shadow-sm border">
+            <img src="https://logos-world.net/wp-content/uploads/2022/03/M-Pesa-Logo.png" alt="M-Pesa" class="h-8 w-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div class="text-green-600 font-bold text-sm hidden">M-PESA</div>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Secure Payments</h3>
+        <p class="text-gray-600 mb-3">Trusted payment methods</p>
+        <div class="flex justify-center space-x-2">
+            <svg class="w-12 h-8" viewBox="0 0 48 32" fill="none">
+                <rect width="48" height="32" rx="4" fill="#1A1F71"/>
+                <text x="24" y="20" text-anchor="middle" fill="white" font-size="10" font-weight="bold">VISA</text>
+            </svg>
+            <svg class="w-12 h-8" viewBox="0 0 48 32" fill="none">
+                <rect width="48" height="32" rx="4" fill="#EB001B"/>
+                <circle cx="18" cy="16" r="8" fill="#FF5F00"/>
+                <circle cx="30" cy="16" r="8" fill="#F79E1B"/>
+            </svg>
+        </div>
+    </div>
+    <div class="text-center p-6 bg-white rounded-xl shadow-md">
+        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 12L11 14L15 10M21 12C21 16.97 16.97 21 12 21C7.03 21 3 16.97 3 12C3 7.03 7.03 3 12 3C16.97 3 21 7.03 21 12Z"/>
+            </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-2">100% Authentic</h3>
+        <p class="text-gray-600">Genuine designer fashion guaranteed</p>
+    </div>
+</div>
+
+<style>
+.slider-image {
+    display: none;
+}
+.slider-image.active {
+    display: block;
+}
+.slider-dot.active {
+    background-color: white !important;
+}
+</style>
+
+<script>
+function addToCart(productId) {
+    fetch('/add_to_cart', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Product added to cart!');
+        }
+    });
+}
+
+function nextImage(productId) {
+    const slider = document.querySelector(`[data-product-id="${productId}"]`);
+    const images = slider.querySelectorAll('.slider-image');
+    const dots = slider.parentElement.querySelectorAll('.slider-dot');
+    
+    let currentIndex = 0;
+    images.forEach((img, index) => {
+        if (img.classList.contains('active')) {
+            currentIndex = index;
+        }
+    });
+    
+    images[currentIndex].classList.remove('active');
+    dots[currentIndex].classList.remove('active');
+    
+    const nextIndex = (currentIndex + 1) % images.length;
+    images[nextIndex].classList.add('active');
+    dots[nextIndex].classList.add('active');
+}
+
+function prevImage(productId) {
+    const slider = document.querySelector(`[data-product-id="${productId}"]`);
+    const images = slider.querySelectorAll('.slider-image');
+    const dots = slider.parentElement.querySelectorAll('.slider-dot');
+    
+    let currentIndex = 0;
+    images.forEach((img, index) => {
+        if (img.classList.contains('active')) {
+            currentIndex = index;
+        }
+    });
+    
+    images[currentIndex].classList.remove('active');
+    dots[currentIndex].classList.remove('active');
+    
+    const prevIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+    images[prevIndex].classList.add('active');
+    dots[prevIndex].classList.add('active');
+}
+</script>
+
+<!-- Footer -->
+<footer class="bg-gray-800 text-white mt-16">
+    <div class="px-4 py-8">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div>
+                <h3 class="text-lg font-bold mb-3 text-orange-400">Our Stores</h3>
+                <div class="space-y-2">
+                    <div>
+                        <h4 class="font-semibold text-white">Lodwar Town</h4>
+                        <p class="text-gray-300 text-sm">behind national bank</p>
+                        <p class="text-gray-300 text-sm">+254 714303534</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-white">South B</h4>
+                        <p class="text-gray-300 text-sm">plainsview road</p>
+                        <p class="text-gray-300 text-sm">+254 714303534</p>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15954.5!2d35.5977!3d3.1190!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM8KwMDcnMDguNCJOIDM1wrAzNSc1MS43IkU!5e0!3m2!1sen!2ske!4v1234567890" width="200" height="120" style="border:0; border-radius: 4px;" allowfullscreen="" loading="lazy"></iframe>
+                    <div class="flex space-x-1 mt-2">
+                        <a href="https://maps.google.com/?q=3.1190,35.5977" target="_blank" class="flex-1 p-2 bg-gray-700 rounded hover:bg-gray-600 transition-all text-center">
+                            <div class="text-xs text-gray-300">Get Directions</div>
+                        </a>
+                        <a href="https://maps.google.com/?q=-1.3032,36.8344" target="_blank" class="flex-1 p-2 bg-gray-700 rounded hover:bg-gray-600 transition-all text-center">
+                            <div class="text-xs text-gray-300">View All Stores</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3 text-orange-400">Shop</h3>
+                <div class="space-y-1">
+                    <a href="/products?category=dresses" class="block text-gray-300 hover:text-orange-400 text-sm">Dresses</a>
+                    <a href="/products?category=tops" class="block text-gray-300 hover:text-orange-400 text-sm">Tops & Blouses</a>
+                    <a href="/products?category=belts" class="block text-gray-300 hover:text-orange-400 text-sm">Belts</a>
+                    <a href="/products?category=accessories" class="block text-gray-300 hover:text-orange-400 text-sm">Bags</a>
+                    <a href="/products?category=shoes" class="block text-gray-300 hover:text-orange-400 text-sm">Shoes</a>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3 text-orange-400">Customer Service</h3>
+                <div class="space-y-1">
+                    <p class="text-gray-300 text-sm">WhatsApp: +254 700 123 456</p>
+                    <p class="text-gray-300 text-sm">Email: care@wegatsaucee.co.ke</p>
+                    <p class="text-gray-300 text-sm">Mon-Sat: 8AM-8PM</p>
+                    <p class="text-gray-300 text-sm">Sunday: 10AM-6PM</p>
+                    <a href="#" onclick="showTrackModal()" class="block text-gray-300 hover:text-orange-400 text-sm mt-2">Track Your Order</a>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3 text-orange-400">Policies</h3>
+                <div class="space-y-1">
+                    <a href="#" class="block text-gray-300 hover:text-orange-400 text-sm">Shipping Policy</a>
+                    <a href="#" class="block text-gray-300 hover:text-orange-400 text-sm">Return Policy</a>
+                    <a href="#" class="block text-gray-300 hover:text-orange-400 text-sm">Privacy Policy</a>
+                    <a href="#" class="block text-gray-300 hover:text-orange-400 text-sm">Terms of Service</a>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3 text-orange-400">Connect</h3>
+                <div class="space-y-1">
+                    <a href="#" class="block text-gray-300 hover:text-orange-400 text-sm">Instagram: @wegatsauceeke</a>
+                    <a href="#" class="block text-gray-300 hover:text-orange-400 text-sm">Facebook: Wegatsaucee Fashion Hub</a>
+                    <a href="#" class="block text-gray-300 hover:text-orange-400 text-sm">TikTok: @wegatsaucee</a>
+                    <p class="text-gray-300 text-sm mt-2">Newsletter:</p>
+                    <div class="flex mt-2">
+                        <input type="email" placeholder="Your email" class="px-2 py-1 text-gray-800 rounded-l text-xs flex-1">
+                        <button class="bg-orange-600 px-2 py-1 rounded-r text-xs hover:bg-orange-500 transition-all">Subscribe</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-gray-600 mt-6 pt-4">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-300">&copy; 2025 Wegatsaucee Fashion Hub Kenya. Premium Fashion Worldwide.</p>
+                <div class="flex space-x-3 mt-4 md:mt-0">
+                    <svg class="w-10 h-6 opacity-70" viewBox="0 0 40 24" fill="none">
+                        <rect width="40" height="24" rx="3" fill="#1A1F71"/>
+                        <text x="20" y="15" text-anchor="middle" fill="white" font-size="8" font-weight="bold">VISA</text>
+                    </svg>
+                    <svg class="w-10 h-6 opacity-70" viewBox="0 0 40 24" fill="none">
+                        <rect width="40" height="24" rx="3" fill="#EB001B"/>
+                        <circle cx="15" cy="12" r="6" fill="#FF5F00"/>
+                        <circle cx="25" cy="12" r="6" fill="#F79E1B"/>
+                    </svg>
+                    <svg class="w-12 h-6 opacity-70" viewBox="0 0 48 24" fill="none">
+                        <rect width="48" height="24" rx="3" fill="#00A651"/>
+                        <text x="24" y="15" text-anchor="middle" fill="white" font-size="7" font-weight="bold">M-PESA</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+{% endblock %}

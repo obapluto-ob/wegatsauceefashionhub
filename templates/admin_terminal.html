@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+    <h2 class="text-2xl font-bold text-green-400 font-mono">SYSTEM TERMINAL</h2>
+    <div class="flex space-x-2">
+        <button onclick="toggleAutoScroll()" id="auto-scroll-btn" class="bg-green-600 text-white px-3 py-1 rounded text-sm font-mono">
+            AUTO-SCROLL: ON
+        </button>
+        <button onclick="clearTerminal()" class="bg-red-600 text-white px-3 py-1 rounded text-sm font-mono">
+            CLEAR
+        </button>
+        <a href="/admin" class="bg-gray-600 text-white px-3 py-1 rounded text-sm font-mono">
+            EXIT
+        </a>
+    </div>
+</div>
+
+<!-- Terminal Window -->
+<div class="bg-black rounded-lg border-2 border-green-500 shadow-2xl overflow-hidden">
+    <!-- Terminal Header -->
+    <div class="bg-gray-800 px-4 py-2 flex items-center">
+        <div class="flex space-x-2">
+            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+            <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+        </div>
+        <div class="ml-4 text-gray-300 text-sm font-mono">
+            turktrendyshop@server:~$ tail -f /var/log/system.log
+        </div>
+        <div class="ml-auto text-gray-400 text-xs font-mono" id="terminal-time">
+            --:--:--
+        </div>
+    </div>
+    
+    <!-- Terminal Content -->
+    <div class="p-4 h-96 overflow-y-auto font-mono text-sm" id="terminal-content">
+        <div class="text-green-400 mb-2">
+            [SYSTEM] Terminal initialized - Monitoring live logs...
+        </div>
+        <div class="text-blue-400 mb-2">
+            [INFO] Connected to Turk Trendy Shop logging system
+        </div>
+        <div class="text-yellow-400 mb-4">
+            [WARN] Running in development mode - Performance monitoring active
+        </div>
+        
+        <!-- Live logs will be inserted here -->
+        <div id="live-logs">
+            {% for log in logs[-20:] %}
+            <div class="mb-1 log-line" data-level="{{ log.level }}">
+                <span class="text-gray-500">[{{ log.timestamp[-8:] }}]</span>
+                <span class="{% if log.level == 'ERROR' %}text-red-400{% elif log.level == 'WARNING' %}text-yellow-400{% else %}text-green-400{% endif %}">
+                    [{{ log.level }}]
+                </span>
+                <span class="text-white">{{ log.message }}</span>
+                {% if log.user_id %}
+                <span class="text-blue-300">| User: {{ log.user_id }}</span>
+                {% endif %}
+                {% if log.execution_time %}
+                <span class="text-purple-300">| {{ log.execution_time }}ms</span>
+                {% endif %}
+                {% if log.memory_usage %}
+                <span class="text-cyan-300">| {{ log.memory_usage }}MB</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Cursor -->
+        <div class="flex items-center mt-2">
+            <span class="text-green-400">turktrendyshop@server:~$</span>
+            <span class="ml-2 bg-green-400 w-2 h-4 animate-pulse"></span>
+        </div>
+    </div>
+</div>
+
+<!-- System Stats Bar -->
+<div class="mt-4 bg-gray-900 rounded-lg p-4">
+    <div class="grid grid-cols-5 gap-4 text-center font-mono text-sm">
+        <div>
+            <span class="text-gray-400">MEM:</span>
+            <span class="text-blue-400" id="term-memory">{{ stats.memory_usage }}MB</span>
+        </div>
+        <div>
+            <span class="text-gray-400">CPU:</span>
+            <span class="text-green-400" id="term-cpu">{{ stats.cpu_usage }}%</span>
+        </div>
+        <div>
+            <span class="text-gray-400">DISK:</span>
+            <span class="text-yellow-400" id="term-disk">{{ stats.disk_usage }}%</span>
+        </div>
+        <div>
+            <span class="text-gray-400">ERRORS:</span>
+            <span class="text-red-400" id="term-errors">{{ stats.error_count }}</span>
+        </div>
+        <div>
+            <span class="text-gray-400">UPTIME:</span>
+            <span class="text-purple-400" id="term-uptime">{{ (stats.uptime / 3600) | round(1) }}h</span>
+        </div>
+    </div>
+</div>
+
+<script>
+let autoScroll = true;
+let terminalContent = document.getElementById('terminal-content');
+let liveLogsDiv = document.getElementById('live-logs');
+
+function fetchLiveLogs() {
+    fetch('/admin/logs/data')
+        .then(response => response.json())
+        .then(data => {
+            updateTerminalLogs(data.logs);
+            updateTerminalStats();
+        })
+        .catch(error => {
+            addLogLine('ERROR', 'Failed to fetch logs: ' + error.message, null, null);
+        });
+}
+
+function updateTerminalLogs(logs) {
+    // Get last 50 logs
+    const recentLogs = logs.slice(-50);
+    liveLogsDiv.innerHTML = '';
+    
+    recentLogs.forEach(log => {
+        addLogLine(log.level, log.message, log.user_id, log.execution_time, log.memory_usage);
+    });
+    
+    if (autoScroll) {
+        terminalContent.scrollTop = terminalContent.scrollHeight;
+    }
+}
+
+function addLogLine(level, message, userId, execTime, memory) {
+    const timestamp = new Date().toLocaleTimeString();
+    const levelColor = level === 'ERROR' ? 'text-red-400' : 
+                      level === 'WARNING' ? 'text-yellow-400' : 'text-green-400';
+    
+    const logLine = document.createElement('div');
+    logLine.className = 'mb-1 log-line';
+    logLine.innerHTML = `
+        <span class="text-gray-500">[${timestamp}]</span>
+        <span class="${levelColor}">[${level}]</span>
+        <span class="text-white">${message}</span>
+        ${userId ? `<span class="text-blue-300">| User: ${userId}</span>` : ''}
+        ${execTime ? `<span class="text-purple-300">| ${execTime}ms</span>` : ''}
+        ${memory ? `<span class="text-cyan-300">| ${memory}MB</span>` : ''}
+    `;
+    
+    liveLogsDiv.appendChild(logLine);
+    
+    // Keep only last 100 lines for performance
+    while (liveLogsDiv.children.length > 100) {
+        liveLogsDiv.removeChild(liveLogsDiv.firstChild);
+    }
+    
+    if (autoScroll) {
+        terminalContent.scrollTop = terminalContent.scrollHeight;
+    }
+}
+
+function updateTerminalStats() {
+    fetch('/admin/developer/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('term-memory').textContent = data.memory_usage + 'MB';
+            document.getElementById('term-cpu').textContent = data.cpu_usage + '%';
+            document.getElementById('term-disk').textContent = data.disk_usage + '%';
+            document.getElementById('term-errors').textContent = data.error_count;
+            document.getElementById('term-uptime').textContent = (data.uptime / 3600).toFixed(1) + 'h';
+            
+            // Update terminal time
+            document.getElementById('terminal-time').textContent = new Date().toLocaleTimeString();
+        });
+}
+
+function toggleAutoScroll() {
+    autoScroll = !autoScroll;
+    const btn = document.getElementById('auto-scroll-btn');
+    btn.textContent = autoScroll ? 'AUTO-SCROLL: ON' : 'AUTO-SCROLL: OFF';
+    btn.className = autoScroll ? 'bg-green-600 text-white px-3 py-1 rounded text-sm font-mono' : 
+                                'bg-gray-600 text-white px-3 py-1 rounded text-sm font-mono';
+}
+
+function clearTerminal() {
+    liveLogsDiv.innerHTML = '';
+    addLogLine('SYSTEM', 'Terminal cleared by admin', 'admin', null, null);
+}
+
+// Simulate real-time logging
+function simulateSystemActivity() {
+    const activities = [
+        'Database query executed',
+        'User session validated', 
+        'Image upload processed',
+        'Payment verification completed',
+        'Cache updated',
+        'Security scan completed'
+    ];
+    
+    setInterval(() => {
+        if (Math.random() > 0.7) { // 30% chance every 3 seconds
+            const activity = activities[Math.floor(Math.random() * activities.length)];
+            const execTime = Math.floor(Math.random() * 200) + 10;
+            addLogLine('INFO', activity, null, execTime, null);
+        }
+    }, 3000);
+}
+
+// Start live updates
+setInterval(fetchLiveLogs, 2000); // Fetch every 2 seconds
+setInterval(updateTerminalStats, 5000); // Update stats every 5 seconds
+simulateSystemActivity(); // Add some realistic activity
+
+// Initial load
+fetchLiveLogs();
+updateTerminalStats();
+</script>
+
+<style>
+/* Terminal styling */
+#terminal-content {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    border: 1px solid #333;
+}
+
+.log-line {
+    transition: all 0.3s ease;
+    padding: 1px 0;
+}
+
+.log-line:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Scrollbar styling */
+#terminal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+#terminal-content::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
+#terminal-content::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+    border-radius: 4px;
+}
+
+#terminal-content::-webkit-scrollbar-thumb:hover {
+    background: #6a6a6a;
+}
+</style>
+{% endblock %}

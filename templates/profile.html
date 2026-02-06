@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-xl shadow-lg border border-orange-200 p-8 mt-8">
+    <!-- User Country Info -->
+    {% if user.country_code %}
+    <div class="text-center mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-100">
+        <img src="https://flagcdn.com/48x36/{{ user.country_code.lower() }}.png" 
+             alt="{{ user.country_code }} flag" class="mx-auto mb-2 rounded shadow-sm">
+        <p class="text-sm font-semibold text-gray-700" id="country-name">{{ get_country_name(user.country_code) }} User</p>
+        <p class="text-xs text-gray-600">Currency: {{ user.currency or 'KSh' }}</p>
+    </div>
+    {% endif %}
+    
+    <h2 class="text-3xl font-bold mb-8 text-center text-gray-800">Update Profile</h2>
+    
+    {% if message %}
+    <div class="bg-green-50 border-l-4 border-green-400 text-green-700 px-4 py-3 rounded-r mb-6">
+        {{ message }}
+    </div>
+    {% endif %}
+    
+    {% if error %}
+    <div class="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded-r mb-6">
+        {{ error }}
+    </div>
+    {% endif %}
+    
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
+            <input type="text" name="name" value="{{ user.name }}" required 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Email Address</label>
+            <input type="email" name="email" value="{{ user.email }}" required 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Phone Number</label>
+            <input type="tel" name="phone" value="{{ user.phone or '' }}" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                   placeholder="+254 700 123 456">
+            <p class="text-xs text-gray-600 mt-1">Required for password recovery</p>
+        </div>
+        
+        <button type="submit" 
+                class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-6 rounded-lg hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 font-semibold shadow-lg">
+            Update Profile
+        </button>
+    </form>
+    
+    <p class="text-center mt-6">
+        <a href="/dashboard" class="text-orange-600 hover:text-orange-700 font-semibold hover:underline transition-colors">Back to Dashboard</a>
+    </p>
+
+<script>
+// Country name mapping
+const countryNames = {
+    'us': 'United States',
+    'ke': 'Kenya',
+    'gb': 'United Kingdom',
+    'tz': 'Tanzania',
+    'ug': 'Uganda',
+    'ng': 'Nigeria',
+    'za': 'South Africa'
+};
+
+// Update country name if element exists
+const countryElement = document.getElementById('country-name');
+if (countryElement) {
+    const countryCode = '{{ user.country_code.lower() if user.country_code else "" }}';
+    if (countryCode && countryNames[countryCode]) {
+        countryElement.textContent = countryNames[countryCode] + ' User';
+    }
+}
+</script>
+</div>
+{% endblock %}

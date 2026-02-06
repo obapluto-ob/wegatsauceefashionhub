@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Wegatsaucee Fashion Hub{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-orange-50 relative">
+    <!-- Animated Background Pattern -->
+    <div class="fixed inset-0 -z-10 opacity-10">
+        <div class="absolute inset-0 bg-gradient-to-br from-orange-300 via-red-300 to-pink-300"></div>
+        <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.3) 2px, transparent 2px), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.3) 2px, transparent 2px); background-size: 40px 40px;"></div>
+    </div>
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <a href="/" class="text-2xl font-bold text-blue-600">Wegatsaucee Fashion Hub</a>
+                <div class="flex items-center space-x-4">
+                    {% if session.admin_logged_in and request.path.startswith('/admin') %}
+                        <span class="text-gray-600 text-sm">Admin Panel</span>
+                        <a href="/admin" class="text-gray-700 hover:text-red-600">Dashboard</a>
+                        <a href="/admin/upload" class="text-gray-700 hover:text-red-600">Add Product</a>
+                        <a href="/" class="text-gray-700 hover:text-red-600">View Shop</a>
+                        <a href="/admin/logout" class="text-gray-700 hover:text-red-600">Logout</a>
+                    {% elif session.user_id %}
+                        <span class="text-gray-600 text-sm">Welcome, <span class="font-semibold text-orange-600">{{ current_user.name if current_user else 'User' }}</span></span>
+                        <a href="/dashboard" class="text-gray-700 hover:text-red-600">Dashboard</a>
+                        <a href="/products" class="text-gray-700 hover:text-red-600">Shop</a>
+                        <a href="/cart" class="text-gray-700 hover:text-red-600 relative">
+                            Cart
+                            <span id="cart-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                        </a>
+                        <a href="/profile" class="text-gray-700 hover:text-red-600">Profile</a>
+                        <a href="#" onclick="showTrackModal()" class="text-gray-700 hover:text-red-600">Track Order</a>
+                        <a href="/logout" class="text-gray-700 hover:text-red-600">Logout</a>
+                    {% else %}
+                        <a href="/" class="text-gray-700 hover:text-red-600">Home</a>
+                        <a href="/products" class="text-gray-700 hover:text-red-600">Products</a>
+                        <a href="/cart" class="text-gray-700 hover:text-red-600 relative">
+                            Cart
+                            <span id="cart-badge-guest" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                        </a>
+                        <a href="/login" class="text-gray-700 hover:text-red-600">Login</a>
+                        <a href="/register" class="text-gray-700 hover:text-red-600">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Track Order Modal -->
+    <div id="trackModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-orange-100 rounded-lg p-6 w-full max-w-md">
+                <h3 class="text-xl font-bold mb-4">Track Your Order</h3>
+                <form method="POST" action="/track">
+                    <div class="mb-4">
+                        <input type="number" name="order_id" placeholder="Enter Order ID" required 
+                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-red-500">
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="submit" 
+                                class="flex-1 bg-gradient-to-r from-red-500 to-orange-500 text-white py-2 px-4 rounded-lg hover:from-red-600 hover:to-orange-600 transition-all">
+                            Track Order
+                        </button>
+                        <button type="button" onclick="hideTrackModal()" 
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-all">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function showTrackModal() {
+        document.getElementById('trackModal').classList.remove('hidden');
+    }
+    function hideTrackModal() {
+        document.getElementById('trackModal').classList.add('hidden');
+    }
+    
+    // Update cart badge
+    function updateCartBadge() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        
+        const badge = document.getElementById('cart-badge') || document.getElementById('cart-badge-guest');
+        if (badge) {
+            if (totalItems > 0) {
+                badge.textContent = totalItems;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    }
+    
+    // Update badge on page load
+    document.addEventListener('DOMContentLoaded', updateCartBadge);
+    </script>
+</body>
+</html>

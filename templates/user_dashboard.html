@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-3xl font-bold text-gray-800">Welcome back, {{ current_user.name if current_user else 'User' }}!</h2>
+    <p class="text-gray-600">Here's what's happening with your account</p>
+</div>
+
+<!-- Tier & Points Banner -->
+<div class="bg-gradient-to-r {% if current_user.tier == 'platinum' %}from-purple-600 to-pink-600{% elif current_user.tier == 'gold' %}from-yellow-500 to-orange-500{% elif current_user.tier == 'silver' %}from-gray-400 to-gray-600{% else %}from-orange-500 to-red-500{% endif %} rounded-xl p-6 text-white mb-8">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <!-- Tier Badge Image -->
+            <div class="w-24 h-24">
+                {% if current_user.tier == 'platinum' %}
+                <img src="https://cdn-icons-png.flaticon.com/512/7656/7656139.png" alt="Platinum" class="w-full h-full">
+                {% elif current_user.tier == 'gold' %}
+                <img src="https://cdn-icons-png.flaticon.com/512/7656/7656116.png" alt="Gold" class="w-full h-full">
+                {% elif current_user.tier == 'silver' %}
+                <img src="https://cdn-icons-png.flaticon.com/512/7656/7656090.png" alt="Silver" class="w-full h-full">
+                {% else %}
+                <img src="https://cdn-icons-png.flaticon.com/512/7656/7656064.png" alt="Bronze" class="w-full h-full">
+                {% endif %}
+            </div>
+            <div>
+                <h3 class="text-2xl font-bold">{{ current_user.tier.upper() }} MEMBER</h3>
+                <p class="text-lg mt-1">{{ current_user.points }} Points</p>
+                <p class="text-sm opacity-90 mt-2">
+                    {% if current_user.tier == 'bronze' %}
+                        Earn 500 points to reach Silver tier!
+                    {% elif current_user.tier == 'silver' %}
+                        Earn {{ 2000 - current_user.points }} more points for Gold tier!
+                    {% elif current_user.tier == 'gold' %}
+                        Earn {{ 5000 - current_user.points }} more points for Platinum tier!
+                    {% else %}
+                        You're at the highest tier! Keep shopping for more rewards.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="text-right">
+            <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                <p class="text-sm opacity-90">Your Benefits:</p>
+                <ul class="text-sm mt-2 space-y-1">
+                    {% if current_user.tier == 'silver' %}
+                    <li>Priority Support</li>
+                    <li>Early Access</li>
+                    <li>1.5x Points</li>
+                    {% elif current_user.tier == 'gold' %}
+                    <li>Free Shipping (6000+ KSh)</li>
+                    <li>Birthday Discount</li>
+                    <li>2x Points</li>
+                    {% elif current_user.tier == 'platinum' %}
+                    <li>1 Free Shipping/Month</li>
+                    <li>VIP Support</li>
+                    <li>2.5x Points</li>
+                    {% else %}
+                    <li>Standard Support</li>
+                    <li>1x Points</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Categories -->
+<div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+    <a href="/products?category=dresses" class="bg-orange-100 rounded-lg p-4 text-center hover:bg-orange-200 transition-all group">
+        <div class="w-16 h-16 mx-auto mb-3 group-hover:scale-110 transition-transform">
+            <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=64&h=64&fit=crop&crop=center" alt="Dresses" class="w-full h-full object-cover rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div class="w-full h-full bg-pink-500 rounded-full hidden"></div>
+        </div>
+        <h3 class="font-semibold text-gray-800">Dresses</h3>
+        <p class="text-sm text-gray-600">Elegant & Stylish</p>
+    </a>
+    <a href="/products?category=tops" class="bg-orange-100 rounded-lg p-4 text-center hover:bg-orange-200 transition-all group">
+        <div class="w-16 h-16 mx-auto mb-3 group-hover:scale-110 transition-transform">
+            <img src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=64&h=64&fit=crop&crop=center" alt="Tops" class="w-full h-full object-cover rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div class="w-full h-full bg-blue-500 rounded-full hidden"></div>
+        </div>
+        <h3 class="font-semibold text-gray-800">Tops</h3>
+        <p class="text-sm text-gray-600">Casual & Chic</p>
+    </a>
+    <a href="/products?category=trousers" class="bg-orange-100 rounded-lg p-4 text-center hover:bg-orange-200 transition-all group">
+        <div class="w-16 h-16 mx-auto mb-3 group-hover:scale-110 transition-transform">
+            <img src="https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=64&h=64&fit=crop&crop=center" alt="Trousers" class="w-full h-full object-cover rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div class="w-full h-full bg-indigo-500 rounded-full hidden"></div>
+        </div>
+        <h3 class="font-semibold text-gray-800">Trousers</h3>
+        <p class="text-sm text-gray-600">Smart & Comfy</p>
+    </a>
+    <a href="/products?category=belts" class="bg-orange-100 rounded-lg p-4 text-center hover:bg-orange-200 transition-all group">
+        <div class="w-16 h-16 mx-auto mb-3 group-hover:scale-110 transition-transform bg-gradient-to-br from-purple-200 to-purple-400 rounded-full flex items-center justify-center">
+            <span class="text-sm font-bold text-white">BELT</span>
+        </div>
+        <h3 class="font-semibold text-gray-800">Belts</h3>
+        <p class="text-sm text-gray-600">Perfect Fit</p>
+    </a>
+    <a href="/products?category=accessories" class="bg-orange-100 rounded-lg p-4 text-center hover:bg-orange-200 transition-all group">
+        <div class="w-16 h-16 mx-auto mb-3 group-hover:scale-110 transition-transform">
+            <img src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=64&h=64&fit=crop&crop=center" alt="Accessories" class="w-full h-full object-cover rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div class="w-full h-full bg-yellow-500 rounded-full hidden"></div>
+        </div>
+        <h3 class="font-semibold text-gray-800">Bags</h3>
+        <p class="text-sm text-gray-600">Complete Your Look</p>
+    </a>
+    <a href="/products?category=shoes" class="bg-orange-100 rounded-lg p-4 text-center hover:bg-orange-200 transition-all group">
+        <div class="w-16 h-16 mx-auto mb-3 group-hover:scale-110 transition-transform">
+            <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=64&h=64&fit=crop&crop=center" alt="Shoes" class="w-full h-full object-cover rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div class="w-full h-full bg-green-500 rounded-full hidden"></div>
+        </div>
+        <h3 class="font-semibold text-gray-800">Shoes</h3>
+        <p class="text-sm text-gray-600">Step in Style</p>
+    </a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Recent Orders -->
+    <div class="lg:col-span-2 bg-orange-100 rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-bold mb-4 flex items-center">
+            Recent Orders
+            {% if orders %}<span class="ml-2 text-sm bg-red-500 text-white px-2 py-1 rounded-full">{{ orders|length }}</span>{% endif %}
+        </h3>
+        {% if orders %}
+            {% for order in orders[:3] %}
+            <div class="bg-white rounded-lg p-4 mb-3 hover:shadow-md transition-all">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-semibold text-gray-800">Order #{{ order.id }}</p>
+                        <p class="text-red-600 font-bold">KSh {{ order.total|int }}</p>
+                        <p class="text-sm text-gray-500">{{ order.created_at.strftime('%d %b %Y at %I:%M %p') }}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold
+                            {% if order.status == 'delivered' %}bg-green-100 text-green-800
+                            {% elif order.status == 'shipped' %}bg-blue-100 text-blue-800
+                            {% elif order.status == 'processing' %}bg-yellow-100 text-yellow-800
+                            {% elif order.status == 'paid' %}bg-purple-100 text-purple-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ order.status.title() }}
+                        </span>
+                        <div class="mt-2 flex space-x-2">
+                            <a href="/track/{{ order.id }}" class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-semibold hover:bg-red-200 transition-all">Track</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% if orders|length > 3 %}
+                <div class="text-center mt-4">
+                    <button class="text-red-600 hover:underline font-semibold">View All Orders ({{ orders|length }})</button>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-8">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M7 18C5.9 18 5 18.9 5 20S5.9 22 7 22 9 21.1 9 20 8.1 18 7 18ZM1 2V4H3L6.6 11.59L5.25 14.04C5.09 14.32 5 14.65 5 15C5 16.1 5.9 17 7 17H19V15H7.42C7.28 15 7.17 14.89 7.17 14.75L7.2 14.63L8.1 13H15.55C16.3 13 16.96 12.59 17.3 11.97L20.88 5H5.21L4.27 3H1ZM17 18C15.9 18 15 18.9 15 20S15.9 22 17 22 19 21.1 19 20 18.1 18 17 18Z"/>
+                </svg>
+                <p class="text-gray-600 mb-4">No orders yet</p>
+                <a href="/products" class="bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-2 rounded-lg hover:from-red-600 hover:to-orange-600 transition-all">
+                    Start Shopping
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Activity & Stats -->
+    <div class="space-y-6">
+        <!-- Stats -->
+        <div class="bg-orange-100 rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-bold mb-4">Your Stats</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center p-3 bg-white rounded-lg">
+                    <span class="text-sm font-semibold">Total Orders</span>
+                    <span class="text-lg font-bold text-purple-600">{{ orders|length }}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-white rounded-lg">
+                    <span class="text-sm font-semibold">Total Spent</span>
+                    <span class="text-lg font-bold text-green-600">KSh {{ "{:,.0f}".format(total_spent) }}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-white rounded-lg">
+                    <span class="text-sm font-semibold">Active Orders</span>
+                    <span class="text-lg font-bold text-blue-600">{{ active_orders }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Feed -->
+        <div class="bg-orange-100 rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-bold mb-4">Recent Activity</h3>
+            <div class="space-y-3">
+                {% if orders %}
+                    {% for order in orders[:2] %}
+                    <div class="flex items-center space-x-3 p-3 bg-white rounded-lg">
+                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold">Order #{{ order.id }} is {{ order.status }}</p>
+                            <p class="text-xs text-gray-500">{{ order.created_at.strftime('%d %b') }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                <div class="flex items-center space-x-3 p-3 bg-white rounded-lg">
+                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold">Welcome to Wegatsaucee!</p>
+                        <p class="text-xs text-gray-500">Account created</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

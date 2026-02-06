@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Tracking - Order #{{ order.id }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-6">
+        <div class="max-w-3xl mx-auto">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h1 class="text-2xl font-bold mb-2">Update Tracking - Order #{{ order.id }}</h1>
+                <p class="text-gray-600">Customer: {{ order.user.name }} ({{ order.user.phone }})</p>
+            </div>
+
+            <!-- Tracking History -->
+            {% if order.tracking %}
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-bold mb-4">Tracking History</h2>
+                <div class="space-y-4">
+                    {% for track in order.tracking|reverse %}
+                    <div class="border-l-4 border-purple-600 pl-4 py-2">
+                        <p class="font-bold">{{ track.location }}</p>
+                        <p class="text-sm text-gray-600">{{ track.transport_company }} - {{ track.driver_name }}</p>
+                        <p class="text-sm text-gray-500">{{ track.status }}</p>
+                        <p class="text-xs text-gray-400">{{ track.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Add New Tracking Update -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4">Add Tracking Update</h2>
+                <form action="{{ url_for('admin_add_tracking') }}" method="POST" class="space-y-4">
+                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                    
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Current Location</label>
+                        <input type="text" name="location" placeholder="e.g., Nairobi Bus Station" 
+                               class="w-full border rounded-lg px-4 py-2" required>
+                        <p class="text-xs text-gray-500 mt-1">Where is the package right now?</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Transport Company</label>
+                        <input type="text" name="transport_company" placeholder="e.g., Modern Coast, Easy Coach" 
+                               class="w-full border rounded-lg px-4 py-2" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Driver/Delivery Person Name</label>
+                        <input type="text" name="driver_name" placeholder="e.g., John Kamau" 
+                               class="w-full border rounded-lg px-4 py-2" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Status Message</label>
+                        <select name="status" class="w-full border rounded-lg px-4 py-2" required>
+                            <option value="">Select status...</option>
+                            <option value="Package received at our facility">Package received at our facility</option>
+                            <option value="In transit to Kenya">In transit to Kenya</option>
+                            <option value="Arrived at border">Arrived at border</option>
+                            <option value="Cleared customs">Cleared customs</option>
+                            <option value="In transit to destination">In transit to destination</option>
+                            <option value="Arrived at pickup location">Arrived at pickup location</option>
+                            <option value="Ready for pickup">Ready for pickup</option>
+                            <option value="Out for delivery">Out for delivery</option>
+                        </select>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 font-bold">
+                            Add Tracking Update
+                        </button>
+                        <a href="{{ url_for('admin_orders') }}" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 font-bold text-center">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

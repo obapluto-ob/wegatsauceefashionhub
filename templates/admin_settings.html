@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h2 class="text-3xl font-bold mb-6">Admin Settings</h2>
+    
+    <!-- Data Management -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 class="text-xl font-bold mb-4">Data Management</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button onclick="backupData()" class="bg-blue-500 text-white p-4 rounded hover:bg-blue-600">
+                <div class="font-bold">Backup Database</div>
+                <div class="text-sm">Save current data</div>
+            </button>
+            <button onclick="exportProducts()" class="bg-green-500 text-white p-4 rounded hover:bg-green-600">
+                <div class="font-bold">Export Products</div>
+                <div class="text-sm">Download CSV</div>
+            </button>
+            <button onclick="exportUsers()" class="bg-purple-500 text-white p-4 rounded hover:bg-purple-600">
+                <div class="font-bold">Export Users</div>
+                <div class="text-sm">Download CSV</div>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Security -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 class="text-xl font-bold mb-4">Security</h3>
+        <form method="POST" action="/admin/change_password">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="password" name="new_password" placeholder="New Admin Password" required class="p-3 border rounded">
+                <button type="submit" class="bg-red-500 text-white p-3 rounded hover:bg-red-600">Change Password</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Developer Tools -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-bold mb-4">Developer Tools</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button onclick="clearLogs()" class="bg-yellow-500 text-white p-4 rounded hover:bg-yellow-600">
+                <div class="font-bold">Clear Logs</div>
+                <div class="text-sm">Clean system logs</div>
+            </button>
+            <button onclick="optimizeDB()" class="bg-indigo-500 text-white p-4 rounded hover:bg-indigo-600">
+                <div class="font-bold">Optimize Database</div>
+                <div class="text-sm">Improve performance</div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function backupData() {
+    fetch('/admin/backup').then(r => r.json()).then(d => {
+        alert('Backup created: ' + d.backup);
+    });
+}
+
+function exportProducts() {
+    window.location.href = '/admin/export/products';
+}
+
+function exportUsers() {
+    window.location.href = '/admin/export/users';
+}
+
+function clearLogs() {
+    if(confirm('Clear all logs?')) {
+        fetch('/admin/clear_logs', {method: 'POST'}).then(() => alert('Logs cleared'));
+    }
+}
+
+function optimizeDB() {
+    fetch('/admin/optimize', {method: 'POST'}).then(() => alert('Database optimized'));
+}
+</script>
+{% endblock %}

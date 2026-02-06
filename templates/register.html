@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-xl shadow-lg border border-orange-200 p-8 mt-8">
+    <h2 class="text-3xl font-bold mb-8 text-center text-gray-800">Create Account</h2>
+    
+    {% if error %}
+    <div class="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded-r mb-6">
+        {{ error }}
+    </div>
+    {% endif %}
+    
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
+            <input type="text" name="name" id="name" required 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                   onblur="checkName()">
+            <div id="name-status" class="text-sm mt-1"></div>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Email Address</label>
+            <input type="email" name="email" id="email" required 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                   onblur="checkEmail()">
+            <div id="email-status" class="text-sm mt-1"></div>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Phone Number</label>
+            <input type="tel" name="phone" id="phone" required 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
+            <input type="hidden" name="country_code" id="country_code">
+            <input type="hidden" name="currency" id="currency">
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Password</label>
+            <div class="relative">
+                <input type="password" name="password" id="password" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all pr-12">
+                <button type="button" onclick="togglePassword('password')" 
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
+                    <span id="password-icon">👁️</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Confirm Password</label>
+            <div class="relative">
+                <input type="password" name="confirm_password" id="confirm_password" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all pr-12"
+                       onkeyup="checkPasswordMatch()">
+                <button type="button" onclick="togglePassword('confirm_password')" 
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
+                    <span id="confirm_password-icon">👁️</span>
+                </button>
+            </div>
+            <div id="password-match-status" class="text-sm mt-1"></div>
+        </div>
+        
+        <!-- reCAPTCHA temporarily disabled - uncomment when you have API keys
+        <div class="mb-6">
+            <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY_HERE"></div>
+        </div>
+        -->
+        
+        <button type="submit" 
+                class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-6 rounded-lg hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 font-semibold shadow-lg">
+            Create Account
+        </button>
+    </form>
+    
+    <p class="text-center mt-6 text-gray-600">
+        Already have an account? <a href="/login" class="text-orange-600 hover:text-orange-700 font-semibold hover:underline transition-colors">Sign In</a>
+    </p>
+</div>
+
+<script>
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = document.getElementById(fieldId + '-icon');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.textContent = '🙈';
+    } else {
+        field.type = 'password';
+        icon.textContent = '👁️';
+    }
+}
+
+function checkName() {
+    const name = document.getElementById('name').value;
+    const status = document.getElementById('name-status');
+    
+    if (name.length < 2) {
+        status.innerHTML = '<span class="text-red-600">Name too short</span>';
+        return;
+    }
+    
+    fetch('/check-name', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name: name})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.available) {
+            status.innerHTML = '<span class="text-green-600">✓ Name available</span>';
+        } else {
+            status.innerHTML = '<span class="text-red-600">✗ Name already taken</span>';
+        }
+    });
+}
+
+function checkEmail() {
+    const email = document.getElementById('email').value;
+    const status = document.getElementById('email-status');
+    
+    if (!email.includes('@')) {
+        status.innerHTML = '<span class="text-red-600">Invalid email</span>';
+        return;
+    }
+    
+    fetch('/check-email', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: email})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.available) {
+            status.innerHTML = '<span class="text-green-600">✓ Email available</span>';
+        } else {
+            status.innerHTML = '<span class="text-red-600">✗ Email already registered</span>';
+        }
+    });
+}
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+<!-- <script src="https://www.google.com/recaptcha/api.js" async defer></script> -->
+
+<script>
+const phoneInput = document.querySelector("#phone");
+const iti = window.intlTelInput(phoneInput, {
+    initialCountry: "ke",
+    preferredCountries: ["ke", "us", "gb", "tz", "ug"],
+    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+});
+
+// Currency mapping
+const currencyMap = {
+    'us': 'USD',
+    'ke': 'KSh',
+    'gb': 'GBP',
+    'tz': 'TSh',
+    'ug': 'USh',
+    'ng': 'NGN',
+    'za': 'ZAR'
+};
+
+phoneInput.addEventListener('countrychange', function() {
+    const countryCode = iti.getSelectedCountryData().iso2;
+    const currency = currencyMap[countryCode] || 'KSh';
+    
+    document.getElementById('country_code').value = countryCode;
+    document.getElementById('currency').value = currency;
+    
+    console.log('Country:', countryCode, 'Currency:', currency);
+});
+
+// Set initial values
+window.addEventListener('load', function() {
+    const countryCode = iti.getSelectedCountryData().iso2;
+    const currency = currencyMap[countryCode] || 'KSh';
+    
+    document.getElementById('country_code').value = countryCode;
+    document.getElementById('currency').value = currency;
+});
+
+function checkPasswordMatch() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    const status = document.getElementById('password-match-status');
+    
+    if (confirmPassword.length === 0) {
+        status.innerHTML = '';
+        return;
+    }
+    
+    if (password === confirmPassword) {
+        status.innerHTML = '<span class="text-green-600">✓ Passwords match</span>';
+    } else {
+        status.innerHTML = '<span class="text-red-600">✗ Passwords do not match</span>';
+    }
+}
+</script>
+{% endblock %}

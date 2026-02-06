@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-3xl font-bold text-gray-800">Developer Tools</h2>
+    <div class="flex space-x-2">
+        <button onclick="refreshStats()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-all">
+            Refresh
+        </button>
+        <a href="/admin" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-all">
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- System Performance -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Memory Usage</p>
+                <p class="text-2xl font-semibold text-gray-900" id="memory-usage">{{ stats.memory_usage }}MB</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">CPU Usage</p>
+                <p class="text-2xl font-semibold text-gray-900" id="cpu-usage">{{ stats.cpu_usage }}%</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Avg Response</p>
+                <p class="text-2xl font-semibold text-gray-900" id="avg-response">{{ stats.avg_response_time }}ms</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-red-100 text-red-600">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Error Count</p>
+                <p class="text-2xl font-semibold text-gray-900" id="error-count">{{ stats.error_count }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Chart -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h3 class="text-xl font-bold mb-4">Performance Metrics</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="text-center p-4 bg-blue-50 rounded">
+            <div class="text-2xl font-bold text-blue-600" id="live-memory">{{ stats.memory_usage }}MB</div>
+            <div class="text-sm text-gray-600">Current Memory</div>
+        </div>
+        <div class="text-center p-4 bg-green-50 rounded">
+            <div class="text-2xl font-bold text-green-600" id="live-cpu">{{ stats.cpu_usage }}%</div>
+            <div class="text-sm text-gray-600">Current CPU</div>
+        </div>
+        <div class="text-center p-4 bg-yellow-50 rounded">
+            <div class="text-2xl font-bold text-yellow-600" id="live-uptime">{{ (stats.uptime / 3600) | round(1) }}h</div>
+            <div class="text-sm text-gray-600">Uptime</div>
+        </div>
+    </div>
+    
+    <!-- Simple Performance History -->
+    <div class="mt-6">
+        <h4 class="font-semibold mb-2">Recent Performance History</h4>
+        <div class="space-y-2" id="performance-history">
+            {% for perf in performance_logs[-5:] %}
+            <div class="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                <span>{{ perf.endpoint or 'System' }}</span>
+                <span class="font-mono">{{ perf.execution_time or 'N/A' }}ms</span>
+                <span class="text-gray-500">{{ perf.timestamp[-8:] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-bold mb-4">Database Tools</h3>
+        <div class="space-y-2">
+            <button onclick="optimizeDatabase()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
+                Optimize Database
+            </button>
+            <button onclick="backupDatabase()" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">
+                Create Backup
+            </button>
+            <button onclick="analyzeQueries()" class="w-full bg-yellow-500 text-white py-2 rounded hover:bg-yellow-600">
+                Analyze Queries
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-bold mb-4">Cache Management</h3>
+        <div class="space-y-2">
+            <button onclick="clearCache()" class="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600">
+                Clear All Cache
+            </button>
+            <button onclick="preloadCache()" class="w-full bg-indigo-500 text-white py-2 rounded hover:bg-indigo-600">
+                Preload Cache
+            </button>
+            <button onclick="cacheStats()" class="w-full bg-purple-500 text-white py-2 rounded hover:bg-purple-600">
+                Cache Statistics
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-bold mb-4">System Health</h3>
+        <div class="space-y-2">
+            <button onclick="runHealthCheck()" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">
+                Health Check
+            </button>
+            <a href="/admin/terminal" class="block w-full bg-black text-green-400 py-2 rounded hover:bg-gray-900 transition-all text-center font-mono">
+                LIVE TERMINAL
+            </a>
+            <button onclick="systemReport()" class="w-full bg-gray-500 text-white py-2 rounded hover:bg-gray-600">
+                System Report
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Errors -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h3 class="text-xl font-bold mb-4">Recent Critical Errors</h3>
+    <div class="overflow-x-auto max-h-64">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="text-left py-2 px-4">Time</th>
+                    <th class="text-left py-2 px-4">Error</th>
+                    <th class="text-left py-2 px-4">User</th>
+                    <th class="text-left py-2 px-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="error-table">
+                {% for error in error_logs %}
+                <tr class="border-b">
+                    <td class="py-2 px-4 text-xs">{{ error.timestamp }}</td>
+                    <td class="py-2 px-4">{{ error.message[:100] }}...</td>
+                    <td class="py-2 px-4 text-xs">{{ error.user_id or 'N/A' }}</td>
+                    <td class="py-2 px-4">
+                        <button onclick="viewError('{{ error.timestamp }}')" class="text-blue-600 hover:underline text-xs">
+                            View Details
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- API Endpoints Performance -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-xl font-bold mb-4">API Endpoint Performance</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="text-left py-2 px-4">Endpoint</th>
+                    <th class="text-left py-2 px-4">Avg Response Time</th>
+                    <th class="text-left py-2 px-4">Memory Usage</th>
+                    <th class="text-left py-2 px-4">Last Called</th>
+                </tr>
+            </thead>
+            <tbody id="performance-table">
+                {% for perf in performance_logs[-10:] %}
+                <tr class="border-b">
+                    <td class="py-2 px-4 font-mono">{{ perf.endpoint or 'N/A' }}</td>
+                    <td class="py-2 px-4">{{ perf.execution_time }}ms</td>
+                    <td class="py-2 px-4">{{ perf.memory }}MB</td>
+                    <td class="py-2 px-4 text-xs">{{ perf.timestamp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function refreshStats() {
+    fetch('/admin/developer/stats')
+        .then(response => response.json())
+        .then(data => {
+            // Update main stats
+            document.getElementById('memory-usage').textContent = data.memory_usage + 'MB';
+            document.getElementById('cpu-usage').textContent = data.cpu_usage + '%';
+            document.getElementById('avg-response').textContent = data.avg_response_time + 'ms';
+            document.getElementById('error-count').textContent = data.error_count;
+            
+            // Update live performance metrics
+            document.getElementById('live-memory').textContent = data.memory_usage + 'MB';
+            document.getElementById('live-cpu').textContent = data.cpu_usage + '%';
+            document.getElementById('live-uptime').textContent = (data.uptime / 3600).toFixed(1) + 'h';
+        })
+        .catch(error => console.error('Error refreshing stats:', error));
+}
+
+function optimizeDatabase() {
+    fetch('/admin/developer/optimize-db', {method: 'POST'})
+        .then(response => response.json())
+        .then(data => alert(data.message));
+}
+
+function clearCache() {
+    fetch('/admin/developer/clear-all-cache', {method: 'POST'})
+        .then(response => response.json())
+        .then(data => alert(data.message));
+}
+
+function runHealthCheck() {
+    fetch('/admin/developer/health-check')
+        .then(response => response.json())
+        .then(data => {
+            const status = data.healthy ? 'System is healthy!' : 'Issues detected!';
+            alert(status + '\n\nDetails:\n' + JSON.stringify(data.details, null, 2));
+        });
+}
+
+function backupDatabase() {
+    fetch('/admin/developer/create-backup', {method: 'POST'})
+        .then(response => response.json())
+        .then(data => alert(data.message));
+}
+
+function analyzeQueries() {
+    fetch('/admin/developer/analyze-queries', {method: 'POST'})
+        .then(response => response.json())
+        .then(data => alert(data.message));
+}
+
+function preloadCache() {
+    fetch('/admin/developer/preload-cache', {method: 'POST'})
+        .then(response => response.json())
+        .then(data => alert(data.message));
+}
+
+function cacheStats() {
+    fetch('/admin/developer/cache-stats')
+        .then(response => response.json())
+        .then(data => {
+            alert('Cache Statistics:\n' + 
+                  'Session Count: ' + data.session_count + '\n' +
+                  'Memory Usage: ' + data.memory_usage + '\n' +
+                  'Cache Hits: ' + data.cache_hits + '\n' +
+                  'Cache Misses: ' + data.cache_misses);
+        });
+}
+
+function systemReport() {
+    fetch('/admin/developer/system-report')
+        .then(response => response.json())
+        .then(data => {
+            alert('System Report:\n' + 
+                  'Users: ' + data.database.users + '\n' +
+                  'Products: ' + data.database.products + '\n' +
+                  'Orders: ' + data.database.orders + '\n' +
+                  'Errors: ' + data.errors + '\n' +
+                  'Memory: ' + data.system.memory_usage + 'MB');
+        });
+}
+
+function viewError(timestamp) {
+    alert('Error details for: ' + timestamp + '\nCheck logs for full details.');
+}
+
+// Auto-refresh every 5 seconds for live metrics
+setInterval(refreshStats, 5000);
+
+// Initial load
+refreshStats();
+</script>
+{% endblock %}
