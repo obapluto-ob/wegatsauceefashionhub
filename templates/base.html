@@ -16,6 +16,14 @@
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center py-4">
                 <a href="/" class="text-xl md:text-2xl font-bold text-blue-600">Wegatsaucee</a>
+                <!-- Cart Icon (Always Visible) -->
+                <a href="/cart" class="relative text-gray-700 hover:text-red-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    <span id="cart-badge-main" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                </a>
+                
                 <button onclick="toggleMenu()" class="md:hidden text-gray-700">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -30,19 +38,11 @@
                     {% elif session.user_id %}
                         <a href="/dashboard" class="text-gray-700 hover:text-red-600 text-sm">Dashboard</a>
                         <a href="/products" class="text-gray-700 hover:text-red-600 text-sm">Shop</a>
-                        <a href="/cart" class="text-gray-700 hover:text-red-600 relative text-sm">
-                            Cart
-                            <span id="cart-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
-                        </a>
                         <a href="#" onclick="showTrackModal()" class="text-gray-700 hover:text-red-600 text-sm">Track</a>
                         <a href="/logout" class="text-gray-700 hover:text-red-600 text-sm">Logout</a>
                     {% else %}
                         <a href="/" class="text-gray-700 hover:text-red-600 text-sm">Home</a>
                         <a href="/products" class="text-gray-700 hover:text-red-600 text-sm">Products</a>
-                        <a href="/cart" class="text-gray-700 hover:text-red-600 relative text-sm">
-                            Cart
-                            <span id="cart-badge-guest" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
-                        </a>
                         <a href="/login" class="text-gray-700 hover:text-red-600 text-sm">Login</a>
                         <a href="/register" class="text-gray-700 hover:text-red-600 text-sm">Register</a>
                     {% endif %}
@@ -52,19 +52,18 @@
                 {% if session.admin_logged_in and request.path.startswith('/admin') %}
                     <a href="/admin" class="block py-2 text-gray-700 hover:text-red-600">Dashboard</a>
                     <a href="/admin/upload" class="block py-2 text-gray-700 hover:text-red-600">Add Product</a>
+                    <a href="/admin/orders" class="block py-2 text-gray-700 hover:text-red-600">Orders</a>
                     <a href="/" class="block py-2 text-gray-700 hover:text-red-600">View Shop</a>
                     <a href="/admin/logout" class="block py-2 text-gray-700 hover:text-red-600">Logout</a>
                 {% elif session.user_id %}
                     <span class="block py-2 text-orange-600 font-semibold">{{ current_user.name if current_user else 'User' }}</span>
                     <a href="/dashboard" class="block py-2 text-gray-700 hover:text-red-600">Dashboard</a>
                     <a href="/products" class="block py-2 text-gray-700 hover:text-red-600">Shop</a>
-                    <a href="/cart" class="block py-2 text-gray-700 hover:text-red-600">Cart</a>
                     <a href="#" onclick="showTrackModal()" class="block py-2 text-gray-700 hover:text-red-600">Track Order</a>
                     <a href="/logout" class="block py-2 text-gray-700 hover:text-red-600">Logout</a>
                 {% else %}
                     <a href="/" class="block py-2 text-gray-700 hover:text-red-600">Home</a>
                     <a href="/products" class="block py-2 text-gray-700 hover:text-red-600">Products</a>
-                    <a href="/cart" class="block py-2 text-gray-700 hover:text-red-600">Cart</a>
                     <a href="/login" class="block py-2 text-gray-700 hover:text-red-600">Login</a>
                     <a href="/register" class="block py-2 text-gray-700 hover:text-red-600">Register</a>
                 {% endif %}
@@ -114,7 +113,7 @@
     function updateCartBadge() {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-        const badge = document.getElementById('cart-badge') || document.getElementById('cart-badge-guest');
+        const badge = document.getElementById('cart-badge-main');
         if (badge) {
             if (totalItems > 0) {
                 badge.textContent = totalItems;
@@ -125,6 +124,8 @@
         }
     }
     document.addEventListener('DOMContentLoaded', updateCartBadge);
+    // Update cart badge when storage changes (from other tabs/windows)
+    window.addEventListener('storage', updateCartBadge);
     </script>
 </body>
 </html>
