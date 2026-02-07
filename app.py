@@ -180,8 +180,30 @@ def convert_price(price, to_currency):
 
 @app.route('/')
 def home():
-    # Get only products marked as trending by admin
-    trending_products = Product.query.filter_by(is_trending=True).limit(8).all()
+    import random
+    
+    # Get trending products and shuffle them
+    trending_products = Product.query.filter_by(is_trending=True).all()
+    random.shuffle(trending_products)
+    trending_products = trending_products[:8]  # Take first 8 after shuffle
+    
+    # Mark hot products (top bought)
+    for product in trending_products:
+        # Count how many times this product was ordered
+        order_count = 0
+        orders = Order.query.filter(Order.status.in_(['paid', 'processing', 'shipped', 'delivered'])).all()
+        for order in orders:
+            try:
+                items = json.loads(order.items)
+                for item in items:
+                    if item.get('id') == product.id:
+                        order_count += item.get('quantity', 1)
+            except:
+                pass
+        
+        # Mark as hot if ordered 5+ times
+        product.is_hot = order_count >= 5
+        product.order_count = order_count
     
     currency = get_user_currency()
     current_user = db.session.get(User, session['user_id']) if 'user_id' in session else None
