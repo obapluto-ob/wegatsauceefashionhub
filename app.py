@@ -607,6 +607,12 @@ def admin_add_product():
     gender = request.form['gender']
     stock = int(request.form['stock'])
     
+    # Parse sizes and colors
+    sizes_str = request.form.get('sizes', '').strip()
+    colors_str = request.form.get('colors', '').strip()
+    sizes = json.dumps([s.strip() for s in sizes_str.split(',') if s.strip()]) if sizes_str else None
+    colors = json.dumps([c.strip() for c in colors_str.split(',') if c.strip()]) if colors_str else None
+    
     image_urls = []
     video_urls = []
     
@@ -638,7 +644,9 @@ def admin_add_product():
         gender=gender,
         stock=stock, 
         image_url=json.dumps(image_urls) if image_urls else None,
-        video_url=json.dumps(video_urls) if video_urls else None
+        video_url=json.dumps(video_urls) if video_urls else None,
+        sizes=sizes,
+        colors=colors
     )
     db.session.add(product)
     db.session.commit()

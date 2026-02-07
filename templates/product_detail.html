@@ -3,18 +3,28 @@
 {% block content %}
 <div class="max-w-7xl mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <!-- Product Images -->
+        <!-- Product Images & Videos -->
         <div>
             {% if product.image_url %}
                 {% if product.image_url.startswith('[') %}
                     {% set images = product.image_url | from_json %}
                     {% if images and images|length > 0 %}
-                        <img id="main-image" src="{{ images[0] }}" alt="{{ product.name }}" class="w-full h-96 object-cover rounded-lg mb-4">
-                        <div class="flex gap-2 overflow-x-auto">
+                        <div id="media-container" class="w-full h-96 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
+                            <img id="main-image" src="{{ images[0] }}" alt="{{ product.name }}" class="max-w-full max-h-full object-contain rounded-lg">
+                        </div>
+                        <div class="flex gap-2 overflow-x-auto pb-2">
                             {% for img in images %}
-                            <img src="{{ img }}" onclick="document.getElementById('main-image').src='{{ img }}'" 
-                                 class="w-20 h-20 object-cover rounded cursor-pointer border-2 hover:border-purple-500">
+                            <img src="{{ img }}" onclick="showImage('{{ img }}')" 
+                                 class="w-20 h-20 object-cover rounded cursor-pointer border-2 hover:border-purple-500 flex-shrink-0">
                             {% endfor %}
+                            {% if product.video_url and product.video_url.startswith('[') %}
+                                {% set videos = product.video_url | from_json %}
+                                {% for video in videos %}
+                                <div onclick="showVideo('{{ video }}')" class="w-20 h-20 bg-black rounded cursor-pointer border-2 hover:border-purple-500 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
                         </div>
                     {% endif %}
                 {% else %}
@@ -40,6 +50,54 @@
             </div>
 
             <p class="text-gray-700 mb-6">{{ product.description }}</p>
+
+            <!-- Low Stock Warning -->
+            {% if product.stock > 0 and product.stock < 10 %}
+            <div class="bg-orange-50 border-l-4 border-orange-500 p-4 mb-6">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-orange-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <p class="text-orange-700 font-semibold">Only {{ product.stock }} left in stock - Order soon!</p>
+                </div>
+            </div>
+            {% elif product.stock == 0 %}
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                <p class="text-red-700 font-semibold">Out of Stock</p>
+            </div>
+            {% endif %}
+
+            <!-- Size Selection -->
+            {% if product.sizes and product.sizes != '[]' %}
+            {% set sizes = product.sizes | from_json %}
+            {% if sizes %}
+            <div class="mb-6">
+                <label class="block font-semibold mb-2">Size</label>
+                <div class="flex gap-2 flex-wrap">
+                    {% for size in sizes %}
+                    <button onclick="selectSize('{{ size }}')" data-size="{{ size }}" class="size-btn px-4 py-2 border-2 rounded-lg hover:border-purple-500 transition">
+                        {{ size }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <!-- Color Selection -->
+            {% if product.colors and product.colors != '[]' %}
+            {% set colors = product.colors | from_json %}
+            {% if colors %}
+            <div class="mb-6">
+                <label class="block font-semibold mb-2">Color</label>
+                <div class="flex gap-2 flex-wrap">
+                    {% for color in colors %}
+                    <button onclick="selectColor('{{ color }}')" data-color="{{ color }}" class="color-btn px-4 py-2 border-2 rounded-lg hover:border-purple-500 transition">
+                        {{ color }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
 
             <!-- Rating -->
             {% if reviews %}
@@ -110,6 +168,33 @@
 </div>
 
 <script>
+let selectedSize = null;
+let selectedColor = null;
+
+function showImage(url) {
+    document.getElementById('media-container').innerHTML = `<img id="main-image" src="${url}" alt="Product" class="max-w-full max-h-full object-contain rounded-lg">`;
+}
+
+function showVideo(url) {
+    document.getElementById('media-container').innerHTML = `<video controls autoplay class="max-w-full max-h-full rounded-lg"><source src="${url}" type="video/mp4">Your browser does not support video.</video>`;
+}
+
+function selectSize(size) {
+    selectedSize = size;
+    document.querySelectorAll('.size-btn').forEach(btn => {
+        btn.classList.remove('border-purple-500', 'bg-purple-50');
+    });
+    event.target.classList.add('border-purple-500', 'bg-purple-50');
+}
+
+function selectColor(color) {
+    selectedColor = color;
+    document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.classList.remove('border-purple-500', 'bg-purple-50');
+    });
+    event.target.classList.add('border-purple-500', 'bg-purple-50');
+}
+
 function changeQty(change) {
     const input = document.getElementById('qty');
     let val = parseInt(input.value) + change;
@@ -129,7 +214,7 @@ function addToCart() {
     .then(data => {
         if (data.success) {
             let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            const existing = cart.find(item => item.id == {{ product.id }});
+            const existing = cart.find(item => item.id == {{ product.id }} && item.size == selectedSize && item.color == selectedColor);
             if (existing) {
                 existing.quantity += qty;
             } else {
@@ -139,7 +224,9 @@ function addToCart() {
                     price: data.product.price,
                     quantity: qty,
                     image_url: data.product.image_url,
-                    currency: '{{ currency }}'
+                    currency: '{{ currency }}',
+                    size: selectedSize,
+                    color: selectedColor
                 });
             }
             localStorage.setItem('cart', JSON.stringify(cart));
