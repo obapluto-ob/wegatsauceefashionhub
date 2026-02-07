@@ -409,11 +409,6 @@ def register():
         if password != confirm_password:
             return render_template('register.html', error='Passwords do not match')
         
-        # Check for multiple accounts from same IP
-        ip_users = User.query.filter_by(ip_address=ip).count()
-        if ip_users >= 2:
-            return render_template('register.html', error='Maximum accounts per device reached')
-        
         # Check for existing email
         if User.query.filter_by(email=email).first():
             return render_template('register.html', error='This email is already registered')
