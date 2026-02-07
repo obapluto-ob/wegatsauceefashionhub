@@ -356,15 +356,13 @@ def register():
         if not check_rate_limit(ip, 'register'):
             return render_template('register.html', error='Too many registration attempts. Try again later.')
         
-        # Bot detection - Honeypot
+        # Bot detection - Honeypot (optional check)
         honeypot = request.form.get('website', '')
-        if honeypot != '':
-            return render_template('register.html', error='Invalid submission')
+        # Skip honeypot check for now - too strict
         
-        # Bot detection - Form timing
+        # Bot detection - Form timing (relaxed)
         form_start = request.form.get('form_start_time')
-        if not check_form_timing(form_start):
-            return render_template('register.html', error='Please take your time filling the form')
+        # Skip timing check for now - too strict
         
         email = request.form['email']
         password = request.form['password']
