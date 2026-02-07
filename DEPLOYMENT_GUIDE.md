@@ -57,6 +57,12 @@
 - **Flash Sales** - Time-limited discounts (database ready)
 - **Coupon Codes** - Discount code system with validation
 
+### Phase 3 Features ✅
+- **Social Proof** - Live purchase notifications ("Someone from Nairobi just purchased...")
+- **Quick View Modal** - Preview products without leaving page
+- **Product Comparison** - Compare multiple products side-by-side (coming soon)
+- **Abandoned Cart Recovery** - Email reminders (coming soon)
+
 ## Database Changes
 
 New tables/columns added:
