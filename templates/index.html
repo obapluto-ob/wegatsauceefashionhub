@@ -200,6 +200,22 @@
     </div>
 </div>
 
+<!-- Social Proof Notification -->
+<div id="social-proof" class="fixed bottom-4 left-4 bg-white rounded-lg shadow-2xl p-4 max-w-sm transform translate-y-32 transition-transform duration-500 z-50 hidden">
+    <div class="flex items-center gap-3">
+        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="flex-1">
+            <p class="text-sm font-semibold text-gray-800" id="social-proof-text"></p>
+            <p class="text-xs text-gray-500" id="social-proof-time"></p>
+        </div>
+        <button onclick="closeSocialProof()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
+    </div>
+</div>
+
 <style>
 .slider-image {
     display: none;
@@ -271,6 +287,37 @@ function prevImage(productId) {
     images[prevIndex].classList.add('active');
     dots[prevIndex].classList.add('active');
 }
+
+// Social Proof Notifications
+const socialProofMessages = [
+    {text: 'Someone from Nairobi just purchased a dress', time: '2 minutes ago'},
+    {text: 'John from Mombasa bought 2 items', time: '5 minutes ago'},
+    {text: 'Sarah from Kisumu added to cart', time: '8 minutes ago'},
+    {text: 'Mike from Nakuru just ordered', time: '12 minutes ago'}
+];
+
+let socialProofIndex = 0;
+function showSocialProof() {
+    const notification = document.getElementById('social-proof');
+    const msg = socialProofMessages[socialProofIndex];
+    document.getElementById('social-proof-text').textContent = msg.text;
+    document.getElementById('social-proof-time').textContent = msg.time;
+    notification.classList.remove('hidden', 'translate-y-32');
+    setTimeout(() => {
+        notification.classList.add('translate-y-32');
+        setTimeout(() => notification.classList.add('hidden'), 500);
+    }, 5000);
+    socialProofIndex = (socialProofIndex + 1) % socialProofMessages.length;
+}
+
+function closeSocialProof() {
+    document.getElementById('social-proof').classList.add('translate-y-32', 'hidden');
+}
+
+setTimeout(() => {
+    showSocialProof();
+    setInterval(showSocialProof, 15000);
+}, 3000);
 </script>
 
 <!-- Footer -->

@@ -78,10 +78,10 @@
                 {% endif %}
             </div>
             <div class="flex space-x-2">
-                <a href="/product/{{ product.id }}" 
-                   class="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2 px-4 rounded hover:from-blue-600 hover:to-purple-600 transition-all text-center">
-                    View Details
-                </a>
+                <button onclick="quickView({{ product.id }})" 
+                        class="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2 px-4 rounded hover:from-blue-600 hover:to-purple-600 transition-all text-center">
+                    Quick View
+                </button>
                 <button onclick="quickAddToCart({{ product.id }})" 
                         id="cart-btn-{{ product.id }}"
                         class="flex-1 bg-gradient-to-r from-red-500 to-orange-500 text-white py-2 px-4 rounded hover:from-red-600 hover:to-orange-600 transition-all">
@@ -91,6 +91,41 @@
         </div>
     </div>
     {% endfor %}
+</div>
+
+<!-- Quick View Modal -->
+<div id="quick-view-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" id="qv-name"></h2>
+                <button onclick="closeQuickView()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <img id="qv-image" src="" alt="" class="w-full h-96 object-cover rounded-lg">
+                </div>
+                <div>
+                    <p id="qv-description" class="text-gray-700 mb-4"></p>
+                    <div class="text-3xl font-bold text-purple-600 mb-4" id="qv-price"></div>
+                    <div class="mb-4">
+                        <label class="block font-semibold mb-2">Quantity</label>
+                        <input type="number" id="qv-qty" value="1" min="1" max="10" class="w-20 border rounded-lg px-3 py-2">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="addFromQuickView()" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-bold hover:from-purple-700 hover:to-pink-700">
+                            Add to Cart
+                        </button>
+                        <a id="qv-full-link" href="" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300 text-center">
+                            Full Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -170,6 +205,37 @@ function updateCartBadge() {
             badge.classList.add('hidden');
         }
     }
+}
+
+let currentQuickViewProduct = null;
+function quickView(productId) {
+    fetch(`/api/product/${productId}`)
+    .then(r => r.json())
+    .then(product => {
+        currentQuickViewProduct = product;
+        document.getElementById('qv-name').textContent = product.name;
+        document.getElementById('qv-description').textContent = product.description;
+        document.getElementById('qv-price').textContent = `{{ currency }} ${product.display_price.toFixed(2)}`;
+        
+        let imageUrl = product.image_url;
+        if (imageUrl && imageUrl.startsWith('[')) {
+            const images = JSON.parse(imageUrl);
+            imageUrl = images[0] || '';
+        }
+        document.getElementById('qv-image').src = imageUrl;
+        document.getElementById('qv-full-link').href = `/product/${product.id}`;
+        document.getElementById('quick-view-modal').classList.remove('hidden');
+    });
+}
+
+function closeQuickView() {
+    document.getElementById('quick-view-modal').classList.add('hidden');
+}
+
+function addFromQuickView() {
+    const qty = parseInt(document.getElementById('qv-qty').value);
+    quickAddToCart(currentQuickViewProduct.id, qty);
+    closeQuickView();
 }
 </script>
 {% endblock %}

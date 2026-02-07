@@ -1671,6 +1671,23 @@ def check_email():
     user = User.query.filter_by(email=email).first()
     return jsonify({'available': user is None})
 
+@app.route('/api/product/<int:id>')
+def api_product(id):
+    product = db.session.get(Product, id)
+    if not product:
+        return jsonify({'error': 'Not found'}), 404
+    
+    currency = get_user_currency()
+    return jsonify({
+        'id': product.id,
+        'name': product.name,
+        'description': product.description,
+        'price': product.price,
+        'display_price': convert_price(product.price, currency),
+        'image_url': product.image_url,
+        'stock': product.stock
+    })
+
 @app.route('/validate-coupon', methods=['POST'])
 def validate_coupon():
     code = request.json.get('code')
