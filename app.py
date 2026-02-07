@@ -381,10 +381,9 @@ def register():
         if is_disposable_email(email):
             return render_template('register.html', error='Disposable email addresses are not allowed')
         
-        # Password validation
-        is_strong, msg = validate_password_strength(password)
-        if not is_strong:
-            return render_template('register.html', error=msg)
+        # Password validation (relaxed - just check length)
+        if len(password) < 6:
+            return render_template('register.html', error='Password must be at least 6 characters')
         
         # Check if passwords match
         if password != confirm_password:
@@ -1031,6 +1030,10 @@ def admin_update_order_status():
     
     order = db.session.get(Order, order_id)
     if order:
+        # Prevent editing if order has delivery confirmation
+        if order.confirmation:
+            return redirect(url_for('admin_orders'))
+        
         old_status = order.status
         order.status = status
         
@@ -1061,6 +1064,12 @@ def admin_add_tracking():
         return redirect(url_for('admin_login'))
     
     order_id = request.form['order_id']
+    order = Order.query.get(order_id)
+    
+    # Prevent adding tracking if order has delivery confirmation
+    if order and order.confirmation:
+        return redirect(url_for('admin_orders'))
+    
     location = request.form['location']
     transport_company = request.form['transport_company']
     driver_name = request.form['driver_name']
@@ -1077,7 +1086,6 @@ def admin_add_tracking():
     db.session.commit()
     
     # Send tracking update email
-    order = Order.query.get(order_id)
     if order and order.user:
         from email_notifications import send_tracking_update
         send_tracking_update(order.user, order, tracking)
