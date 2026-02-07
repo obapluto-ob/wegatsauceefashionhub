@@ -1726,6 +1726,50 @@ def admin_upload():
         return redirect(url_for('admin_login'))
     return render_template('admin_upload.html')
 
+@app.route('/admin/coupons')
+def admin_coupons():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    coupons = Coupon.query.order_by(Coupon.created_at.desc()).all()
+    return render_template('admin_coupons.html', coupons=coupons)
+
+@app.route('/admin/create_coupon', methods=['POST'])
+def admin_create_coupon():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    code = request.form['code'].upper()
+    discount_type = request.form['discount_type']
+    discount_value = float(request.form['discount_value'])
+    min_purchase = float(request.form.get('min_purchase', 0))
+    max_uses = int(request.form['max_uses']) if request.form.get('max_uses') else None
+    expires_days = int(request.form.get('expires_days', 30))
+    
+    coupon = Coupon(
+        code=code,
+        discount_percent=discount_value if discount_type == 'percent' else None,
+        discount_amount=discount_value if discount_type == 'amount' else None,
+        min_purchase=min_purchase,
+        max_uses=max_uses,
+        expires_at=datetime.utcnow() + timedelta(days=expires_days),
+        active=True
+    )
+    db.session.add(coupon)
+    db.session.commit()
+    
+    return redirect(url_for('admin_coupons'))
+
+@app.route('/admin/toggle_coupon/<int:id>', methods=['POST'])
+def admin_toggle_coupon(id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    coupon = Coupon.query.get_or_404(id)
+    coupon.active = not coupon.active
+    db.session.commit()
+    
+    return redirect(url_for('admin_coupons'))
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if request.method == 'POST':

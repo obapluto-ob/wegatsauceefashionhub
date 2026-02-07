@@ -33,6 +33,7 @@
                     {% if session.admin_logged_in and request.path.startswith('/admin') %}
                         <a href="/admin" class="text-gray-700 hover:text-red-600 text-sm">Dashboard</a>
                         <a href="/admin/upload" class="text-gray-700 hover:text-red-600 text-sm">Add Product</a>
+                        <a href="/admin/coupons" class="text-gray-700 hover:text-red-600 text-sm">Coupons</a>
                         <a href="/" class="text-gray-700 hover:text-red-600 text-sm">View Shop</a>
                         <a href="/admin/logout" class="text-gray-700 hover:text-red-600 text-sm">Logout</a>
                     {% elif session.user_id %}
@@ -52,6 +53,7 @@
                 {% if session.admin_logged_in and request.path.startswith('/admin') %}
                     <a href="/admin" class="block py-2 text-gray-700 hover:text-red-600">Dashboard</a>
                     <a href="/admin/upload" class="block py-2 text-gray-700 hover:text-red-600">Add Product</a>
+                    <a href="/admin/coupons" class="block py-2 text-gray-700 hover:text-red-600">Coupons</a>
                     <a href="/admin/orders" class="block py-2 text-gray-700 hover:text-red-600">Orders</a>
                     <a href="/" class="block py-2 text-gray-700 hover:text-red-600">View Shop</a>
                     <a href="/admin/logout" class="block py-2 text-gray-700 hover:text-red-600">Logout</a>
