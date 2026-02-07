@@ -10,7 +10,29 @@
         <div id="order-items" class="space-y-3 mb-4">
             <!-- Cart items will be loaded here -->
         </div>
+        
+        <!-- Coupon Code -->
+        <div class="border-t pt-4 mb-4">
+            <label class="block text-sm font-medium mb-2">Have a coupon code?</label>
+            <div class="flex gap-2">
+                <input type="text" id="coupon-code" placeholder="Enter code" 
+                       class="flex-1 border rounded-lg px-3 py-2 uppercase">
+                <button onclick="applyCoupon()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
+                    Apply
+                </button>
+            </div>
+            <div id="coupon-message" class="mt-2 text-sm"></div>
+        </div>
+        
         <div class="border-t pt-4">
+            <div class="flex justify-between mb-2">
+                <span>Subtotal:</span>
+                <span id="subtotal-amount">KSh 0</span>
+            </div>
+            <div id="discount-row" class="flex justify-between mb-2 text-green-600 hidden">
+                <span>Discount:</span>
+                <span id="discount-amount">- KSh 0</span>
+            </div>
             <div class="flex justify-between text-xl font-bold">
                 <span>Total:</span>
                 <span id="total-amount">KSh 0</span>
@@ -75,18 +97,21 @@
 </div>
 
 <script>
+let appliedCoupon = null;
+let discountAmount = 0;
+
 // Load cart items on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadCartItems();
 });
 
 function loadCartItems() {
-    // Get cart from localStorage
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const orderItemsDiv = document.getElementById('order-items');
+    const subtotalSpan = document.getElementById('subtotal-amount');
     const totalAmountSpan = document.getElementById('total-amount');
     
-    let total = 0;
+    let subtotal = 0;
     orderItemsDiv.innerHTML = '';
     
     if (cart.length === 0) {
@@ -96,7 +121,7 @@ function loadCartItems() {
     
     cart.forEach(item => {
         const itemTotal = item.price * item.quantity;
-        total += itemTotal;
+        subtotal += itemTotal;
         
         orderItemsDiv.innerHTML += `
             <div class="flex items-center space-x-4 p-3 border rounded-lg">
@@ -113,7 +138,39 @@ function loadCartItems() {
         `;
     });
     
+    subtotalSpan.textContent = `KSh ${subtotal.toLocaleString()}`;
+    const total = subtotal - discountAmount;
     totalAmountSpan.textContent = `KSh ${total.toLocaleString()}`;
+}
+
+function applyCoupon() {
+    const code = document.getElementById('coupon-code').value.trim();
+    if (!code) return;
+    
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    fetch('/validate-coupon', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({code, subtotal})
+    })
+    .then(r => r.json())
+    .then(data => {
+        const msg = document.getElementById('coupon-message');
+        if (data.valid) {
+            appliedCoupon = data.code;
+            discountAmount = data.discount;
+            msg.className = 'mt-2 text-sm text-green-600';
+            msg.textContent = data.message;
+            document.getElementById('discount-row').classList.remove('hidden');
+            document.getElementById('discount-amount').textContent = `- KSh ${discountAmount.toLocaleString()}`;
+            loadCartItems();
+        } else {
+            msg.className = 'mt-2 text-sm text-red-600';
+            msg.textContent = data.message;
+        }
+    });
 }
 
 function placeOrder() {
@@ -142,7 +199,9 @@ function placeOrder() {
         },
         body: JSON.stringify({
             cart: cart,
-            delivery_address: deliveryAddress
+            delivery_address: deliveryAddress,
+            coupon_code: appliedCoupon,
+            discount_amount: discountAmount
         })
     })
     .then(response => response.json())

@@ -65,6 +65,8 @@ class Product(db.Model):
     sizes = db.Column(db.Text)  # JSON array: ["S", "M", "L", "XL"]
     colors = db.Column(db.Text)  # JSON array: ["Red", "Blue", "Black"]
     is_trending = db.Column(db.Boolean, default=False)  # Mark as trending
+    flash_sale_price = db.Column(db.Float)  # Flash sale price
+    flash_sale_end = db.Column(db.DateTime)  # Flash sale end time
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Order(db.Model):
@@ -79,6 +81,8 @@ class Order(db.Model):
     items = db.Column(db.Text)  # JSON string of cart items
     cancellation_reason = db.Column(db.Text)  # Why order was cancelled
     expected_delivery = db.Column(db.DateTime)  # Expected delivery date
+    coupon_code = db.Column(db.String(50))  # Applied coupon code
+    discount_amount = db.Column(db.Float, default=0)  # Discount from coupon
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref=db.backref('orders', lazy=True))
 
@@ -129,6 +133,18 @@ class Review(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     product = db.relationship('Product', backref=db.backref('reviews', lazy=True))
     user = db.relationship('User', backref=db.backref('reviews', lazy=True))
+
+class Coupon(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(50), unique=True, nullable=False)
+    discount_percent = db.Column(db.Float)  # Percentage discount
+    discount_amount = db.Column(db.Float)  # Fixed amount discount
+    min_purchase = db.Column(db.Float, default=0)  # Minimum purchase required
+    max_uses = db.Column(db.Integer)  # Max number of uses
+    used_count = db.Column(db.Integer, default=0)  # Times used
+    expires_at = db.Column(db.DateTime)  # Expiration date
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Routes
 def get_user_currency():
@@ -247,22 +263,22 @@ def product_detail(id):
     
     # Track recently viewed
     if 'user_id' in session:
-        # Remove old view if exists
         old_view = RecentlyViewed.query.filter_by(user_id=session['user_id'], product_id=id).first()
         if old_view:
             db.session.delete(old_view)
-        
-        # Add new view
         recent_view = RecentlyViewed(user_id=session['user_id'], product_id=id)
         db.session.add(recent_view)
-        
-        # Keep only last 10 views
         all_views = RecentlyViewed.query.filter_by(user_id=session['user_id']).order_by(RecentlyViewed.viewed_at.desc()).all()
         if len(all_views) > 10:
             for old in all_views[10:]:
                 db.session.delete(old)
-        
         db.session.commit()
+    
+    # Get related products (same category, different product)
+    related_products = Product.query.filter(
+        Product.category == product.category,
+        Product.id != product.id
+    ).limit(4).all()
     
     # Get reviews
     reviews = Review.query.filter_by(product_id=id).order_by(Review.created_at.desc()).all()
@@ -277,8 +293,13 @@ def product_detail(id):
     current_user = db.session.get(User, session['user_id']) if 'user_id' in session else None
     product.display_price = convert_price(product.price, currency)
     
+    # Convert related products prices
+    for rp in related_products:
+        rp.display_price = convert_price(rp.price, currency)
+    
     return render_template('product_detail.html', product=product, reviews=reviews, avg_rating=avg_rating, 
-                         currency=currency, current_user=current_user, in_wishlist=in_wishlist)
+                         currency=currency, current_user=current_user, in_wishlist=in_wishlist,
+                         related_products=related_products)
 
 @app.route('/cart')
 def cart():
@@ -1464,20 +1485,25 @@ def checkout():
         return jsonify({'error': 'Cart is empty'}), 400
     
     user = db.session.get(User, session['user_id'])
+    coupon_code = request.json.get('coupon_code')
+    discount_amount = request.json.get('discount_amount', 0)
     
     # Calculate totals
     subtotal = sum(item['price'] * item['quantity'] for item in cart)
     
+    # Apply discount
+    subtotal_after_discount = subtotal - discount_amount
+    
     # Tiered shipping based on order value
-    if subtotal < 2000:
+    if subtotal_after_discount < 2000:
         shipping_fee = 300
-    elif subtotal < 5000:
+    elif subtotal_after_discount < 5000:
         shipping_fee = 400
     else:
         shipping_fee = 500
     
     # Check for free shipping benefits
-    if user.tier == 'gold' and subtotal >= 6000:
+    if user.tier == 'gold' and subtotal_after_discount >= 6000:
         shipping_fee = 0
     elif user.tier == 'platinum':
         from datetime import date
@@ -1491,8 +1517,8 @@ def checkout():
             shipping_fee = 0
     
     # Platform commission (10%)
-    commission = subtotal * 0.10
-    total = subtotal + shipping_fee + commission
+    commission = subtotal_after_discount * 0.10
+    total = subtotal_after_discount + shipping_fee + commission
     
     # Expected delivery (7-14 days from Tanzania to Kenya)
     from datetime import timedelta
@@ -1507,9 +1533,18 @@ def checkout():
         status='pending',
         payment_method='whatsapp',
         items=json.dumps(cart),
-        expected_delivery=expected_delivery
+        expected_delivery=expected_delivery,
+        coupon_code=coupon_code,
+        discount_amount=discount_amount
     )
     db.session.add(order)
+    
+    # Update coupon usage
+    if coupon_code:
+        coupon = Coupon.query.filter_by(code=coupon_code.upper()).first()
+        if coupon:
+            coupon.used_count += 1
+    
     db.session.commit()
     
     # Build WhatsApp message with PAYMENT PROTECTION
@@ -1532,7 +1567,7 @@ def checkout():
             message += "Priority Support, Early Access\n\n"
         elif user.tier == 'gold':
             message += "Priority Support, Early Access"
-            if subtotal >= 6000:
+            if subtotal_after_discount >= 6000:
                 message += ", FREE SHIPPING\n\n"
             else:
                 message += "\n\n"
@@ -1550,6 +1585,8 @@ def checkout():
             message += f"  Image: {request.host_url.rstrip('/')}{item['image_url']}\n"
     
     message += f"\nSubtotal: KSh {subtotal:,.0f}\n"
+    if discount_amount > 0:
+        message += f"Discount ({coupon_code}): -KSh {discount_amount:,.0f}\n"
     message += f"Shipping: KSh {shipping_fee:,.0f}"
     if shipping_fee == 0:
         message += " (FREE - Tier Benefit)"
@@ -1633,6 +1670,38 @@ def check_email():
     email = request.json.get('email')
     user = User.query.filter_by(email=email).first()
     return jsonify({'available': user is None})
+
+@app.route('/validate-coupon', methods=['POST'])
+def validate_coupon():
+    code = request.json.get('code')
+    subtotal = request.json.get('subtotal', 0)
+    
+    coupon = Coupon.query.filter_by(code=code.upper(), active=True).first()
+    
+    if not coupon:
+        return jsonify({'valid': False, 'message': 'Invalid coupon code'})
+    
+    if coupon.expires_at and coupon.expires_at < datetime.utcnow():
+        return jsonify({'valid': False, 'message': 'Coupon has expired'})
+    
+    if coupon.max_uses and coupon.used_count >= coupon.max_uses:
+        return jsonify({'valid': False, 'message': 'Coupon usage limit reached'})
+    
+    if subtotal < coupon.min_purchase:
+        return jsonify({'valid': False, 'message': f'Minimum purchase of KSh {coupon.min_purchase:,.0f} required'})
+    
+    discount = 0
+    if coupon.discount_percent:
+        discount = subtotal * (coupon.discount_percent / 100)
+    elif coupon.discount_amount:
+        discount = coupon.discount_amount
+    
+    return jsonify({
+        'valid': True,
+        'discount': discount,
+        'code': coupon.code,
+        'message': f'Coupon applied! You save KSh {discount:,.0f}'
+    })
 
 @app.route('/admin/upload')
 def admin_upload():
