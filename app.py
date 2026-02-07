@@ -1402,10 +1402,10 @@ def checkout():
     message += f"Shipping: KSh {shipping_fee:,.0f}"
     if shipping_fee == 0:
         message += " (FREE - Tier Benefit)"
-    message += f"\nPlatform Fee: KSh {commission:,.0f}\n"
+    message += f"\nTax: KSh {commission:,.0f}\n"
     message += f"*TOTAL: KSh {total:,.0f}*\n\n"
     message += f"Expected Delivery: {expected_delivery.strftime('%B %d, %Y')}\n\n"
-    message += f"View order: {request.host_url}admin/orders"
+    message += "Thank you for your order!"
     
     import urllib.parse
     encoded_message = urllib.parse.quote(message)
