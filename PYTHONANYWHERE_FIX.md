@@ -1,234 +1,201 @@
 # PythonAnywhere Deployment Fix Guide
 
-## Common Internal Server Error Causes & Solutions
+## 🚨 Current Issues
+1. Missing database columns (`flash_sale_price`, `flash_sale_end`, `coupon_code`, `discount_amount`)
+2. Missing environment variables (`ADMIN_USER`, `ADMIN_PASS`)
+3. Database file access issues
 
-### 1. Database Path Issue (MOST COMMON)
-**Problem:** SQLite database path not found
-**Solution:** Database is now in `instance/` folder
+## 🔧 Step-by-Step Fix
 
-### 2. Missing Dependencies
-**Problem:** Import errors for custom modules
-**Solution:** All dependencies are in requirements.txt
+### Step 1: Set Environment Variables
 
-### 3. File Permissions
-**Problem:** Can't write to database or upload files
-**Solution:** Check folder permissions on PythonAnywhere
-
----
-
-## Step-by-Step Deployment to PythonAnywhere
-
-### Step 1: Upload Your Files
 1. Go to PythonAnywhere Dashboard
 2. Click on "Files" tab
-3. Upload all files to `/home/yourusername/turktrendyshop/`
-4. Make sure these folders exist:
-   - `instance/` (for database)
-   - `static/uploads/` (for images)
-   - `templates/` (for HTML files)
-   - `logs/` (for log files)
+3. Navigate to: `/home/emonigatsaucee/wegatsauceefashionhub/`
+4. Create a new file named `.env`
+5. Add the following content:
 
-### Step 2: Install Dependencies
-1. Open a Bash console on PythonAnywhere
+```bash
+SECRET_KEY=your-secret-key-change-this
+SQLALCHEMY_DATABASE_URI=sqlite:////home/emonigatsaucee/wegatsauceefashionhub/instance/wegatsaucee.db
+ADMIN_USER=admin
+ADMIN_PASS=admin123
+```
+
+### Step 2: Run Database Migration
+
+1. Open a **Bash console** in PythonAnywhere
 2. Navigate to your project:
-   ```bash
-   cd ~/turktrendyshop
-   ```
-3. Install requirements:
-   ```bash
-   pip3 install --user -r requirements.txt
-   ```
-
-### Step 3: Initialize Database
-1. In the same Bash console:
-   ```bash
-   python3 init_db.py
-   ```
-   OR manually:
-   ```bash
-   python3
-   >>> from app import app, db
-   >>> with app.app_context():
-   ...     db.create_all()
-   >>> exit()
-   ```
-
-### Step 4: Configure WSGI File
-1. Go to "Web" tab on PythonAnywhere
-2. Click on your web app
-3. Scroll to "Code" section
-4. Click on WSGI configuration file link
-5. Replace ALL content with:
-
-```python
-import sys
-import os
-
-# Add your project directory to the sys.path
-project_home = '/home/YOURUSERNAME/turktrendyshop'  # CHANGE YOURUSERNAME
-if project_home not in sys.path:
-    sys.path.insert(0, project_home)
-
-# Set environment to production
-os.environ['FLASK_ENV'] = 'production'
-
-# Import Flask app
-from app import app as application
-```
-
-**IMPORTANT:** Replace `YOURUSERNAME` with your actual PythonAnywhere username!
-
-### Step 5: Set Static Files
-1. Still in "Web" tab
-2. Scroll to "Static files" section
-3. Add these mappings:
-
-| URL | Directory |
-|-----|-----------|
-| /static/ | /home/YOURUSERNAME/turktrendyshop/static/ |
-
-### Step 6: Check Error Logs
-1. In "Web" tab, scroll to "Log files"
-2. Click on "Error log" to see what's wrong
-3. Common errors and fixes:
-
-#### Error: "No module named 'decouple'"
-**Fix:** Run `pip3 install --user python-decouple`
-
-#### Error: "No such file or directory: 'wegatsaucee.db'"
-**Fix:** Database path issue - already fixed in code above
-
-#### Error: "Permission denied"
-**Fix:** Run in Bash console:
 ```bash
-chmod 755 ~/turktrendyshop
-chmod 755 ~/turktrendyshop/instance
-chmod 666 ~/turktrendyshop/instance/wegatsaucee.db
+cd ~/wegatsauceefashionhub
 ```
 
-#### Error: "Import error: payments, logger, security"
-**Fix:** Make sure all .py files are uploaded:
-- payments.py
-- logger.py
-- security.py
-- email_notifications.py (if exists)
+3. Activate your virtual environment:
+```bash
+source ~/.virtualenvs/myenv/bin/activate
+```
 
-### Step 7: Reload Web App
-1. Go back to "Web" tab
-2. Click the big green "Reload" button
-3. Visit your site: `https://yourusername.pythonanywhere.com`
+4. Run the migration script:
+```bash
+python migrate_database.py
+```
 
----
+### Step 3: Fix Database Permissions
 
-## Quick Troubleshooting Checklist
+```bash
+# Ensure instance directory exists
+mkdir -p ~/wegatsauceefashionhub/instance
 
-- [ ] All files uploaded to PythonAnywhere
-- [ ] `instance/` folder exists
-- [ ] `static/uploads/` folder exists
-- [ ] Dependencies installed: `pip3 install --user -r requirements.txt`
-- [ ] Database initialized: `python3 init_db.py`
-- [ ] WSGI file configured with correct username
-- [ ] Static files mapped correctly
+# Set proper permissions
+chmod 755 ~/wegatsauceefashionhub/instance
+chmod 644 ~/wegatsauceefashionhub/instance/wegatsaucee.db
+```
+
+### Step 4: Reload Web App
+
+1. Go to "Web" tab in PythonAnywhere
+2. Click the green "Reload" button
+3. Test your site
+
+## 🔍 Verification Steps
+
+### Check if migration worked:
+```bash
+cd ~/wegatsauceefashionhub
+source ~/.virtualenvs/myenv/bin/activate
+python -c "
+from app import app, db, Product, Order
+with app.app_context():
+    # Check Product table
+    from sqlalchemy import inspect
+    inspector = inspect(db.engine)
+    product_cols = [c['name'] for c in inspector.get_columns('product')]
+    print('Product columns:', product_cols)
+    
+    # Check Order table
+    order_cols = [c['name'] for c in inspector.get_columns('order')]
+    print('Order columns:', order_cols)
+"
+```
+
+### Check environment variables:
+```bash
+cd ~/wegatsauceefashionhub
+python -c "
+from decouple import config
+print('ADMIN_USER:', config('ADMIN_USER', default='NOT SET'))
+print('ADMIN_PASS:', config('ADMIN_PASS', default='NOT SET'))
+"
+```
+
+## 🐛 Troubleshooting
+
+### Issue: "unable to open database file"
+
+**Solution:**
+```bash
+# Check if database exists
+ls -la ~/wegatsauceefashionhub/instance/wegatsaucee.db
+
+# If not, create it:
+cd ~/wegatsauceefashionhub
+source ~/.virtualenvs/myenv/bin/activate
+python -c "
+from app import app, db
+with app.app_context():
+    db.create_all()
+    print('Database created!')
+"
+```
+
+### Issue: "no such table: product"
+
+**Solution:**
+```bash
+cd ~/wegatsauceefashionhub
+source ~/.virtualenvs/myenv/bin/activate
+python -c "
+from app import app, db
+with app.app_context():
+    db.create_all()
+    print('All tables created!')
+"
+```
+
+### Issue: "ADMIN_USER not found"
+
+**Solution:**
+1. Make sure `.env` file exists in project root
+2. Check file content:
+```bash
+cat ~/wegatsauceefashionhub/.env
+```
+3. If missing, create it with the content from Step 1
+
+## 📝 Alternative: Manual Database Fix
+
+If migration script doesn't work, manually add columns:
+
+```bash
+cd ~/wegatsauceefashionhub
+sqlite3 instance/wegatsaucee.db
+
+# In SQLite prompt:
+ALTER TABLE product ADD COLUMN flash_sale_price REAL;
+ALTER TABLE product ADD COLUMN flash_sale_end DATETIME;
+ALTER TABLE "order" ADD COLUMN coupon_code VARCHAR(50);
+ALTER TABLE "order" ADD COLUMN discount_amount REAL DEFAULT 0;
+.quit
+```
+
+## ✅ Success Checklist
+
+- [ ] `.env` file created with ADMIN_USER and ADMIN_PASS
+- [ ] Database migration completed successfully
+- [ ] Database file has proper permissions
 - [ ] Web app reloaded
-- [ ] Error log checked
+- [ ] Homepage loads without errors
+- [ ] Admin login works (admin/admin123)
+- [ ] Products page displays correctly
 
----
+## 🆘 Still Having Issues?
 
-## Testing Your Deployment
-
-1. **Homepage:** Visit `https://yourusername.pythonanywhere.com/`
-   - Should show product catalog
-
-2. **Admin Panel:** Visit `https://yourusername.pythonanywhere.com/admin/login`
-   - Login: admin / admin123
-
-3. **Registration:** Try creating a new account
-
-4. **Check Logs:** If errors occur, check:
-   - Error log in PythonAnywhere Web tab
-   - `logs/` folder in your project
-
----
-
-## Environment Variables on PythonAnywhere
-
-If you need to use environment variables:
-
-1. Go to "Web" tab
-2. Scroll to "Virtualenv" section (optional)
-3. Or add to WSGI file:
-```python
-os.environ['SECRET_KEY'] = 'your-secret-key'
-os.environ['ADMIN_USER'] = 'admin'
-os.environ['ADMIN_PASS'] = 'admin123'
-```
-
----
-
-## Database Backup on PythonAnywhere
-
-To backup your database:
+Check error logs:
 ```bash
-cd ~/turktrendyshop/instance
-cp wegatsaucee.db wegatsaucee_backup_$(date +%Y%m%d).db
+# View error log
+tail -100 /var/log/emonigatsaucee.pythonanywhere.com.error.log
+
+# View server log
+tail -100 /var/log/emonigatsaucee.pythonanywhere.com.server.log
 ```
 
----
+## 📞 Quick Commands Reference
 
-## Common PythonAnywhere Limitations
+```bash
+# Navigate to project
+cd ~/wegatsauceefashionhub
 
-1. **Free Account:**
-   - Only 1 web app
-   - Limited CPU time
-   - No HTTPS for custom domains
-   - Files expire after 3 months of inactivity
+# Activate virtual environment
+source ~/.virtualenvs/myenv/bin/activate
 
-2. **File Upload Size:**
-   - Max 100MB per file on free account
-   - Adjust in app.py if needed
+# Run migration
+python migrate_database.py
 
-3. **Database:**
-   - SQLite works fine for small sites
-   - For larger sites, upgrade to MySQL
+# Check database
+sqlite3 instance/wegatsaucee.db ".tables"
 
----
+# View environment variables
+cat .env
 
-## Still Getting Errors?
+# Restart web app (do this in Web tab on PythonAnywhere dashboard)
+```
 
-1. **Check Error Log:**
-   ```
-   Web tab → Log files → Error log
-   ```
+## 🎯 Expected Result
 
-2. **Check Server Log:**
-   ```
-   Web tab → Log files → Server log
-   ```
-
-3. **Run in Console:**
-   ```bash
-   cd ~/turktrendyshop
-   python3 app.py
-   ```
-   See what error appears
-
-4. **Common Fix - Reinstall Everything:**
-   ```bash
-   cd ~/turktrendyshop
-   pip3 install --user --force-reinstall -r requirements.txt
-   python3 init_db.py
-   ```
-
----
-
-## Contact Support
-
-If you're still stuck:
-1. Copy the error from Error Log
-2. Share it with me
-3. I'll help you fix it!
-
-**Your site should now be working at:**
-`https://yourusername.pythonanywhere.com`
-
-Good luck! 🚀
+After following these steps:
+- ✅ Homepage loads successfully
+- ✅ Products display correctly
+- ✅ Admin login works
+- ✅ No database errors in logs
+- ✅ Orders can be created
+- ✅ Tracking works

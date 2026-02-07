@@ -64,7 +64,40 @@ A modern Flask e-commerce website for fashion retail with international payment 
 
 ## 🌐 Deployment
 
-- **PythonAnywhere**: Easy Flask hosting
+### PythonAnywhere (Recommended)
+
+**Quick Fix for Current Deployment Issues:**
+
+If you're seeing database errors, run this one command:
+
+```bash
+cd ~/wegatsauceefashionhub && source ~/.virtualenvs/myenv/bin/activate && python quick_fix.py
+```
+
+Then reload your web app in the PythonAnywhere dashboard.
+
+**Fresh Deployment:**
+
+1. Upload project files to PythonAnywhere
+2. Create virtual environment:
+   ```bash
+   mkvirtualenv --python=/usr/bin/python3.10 myenv
+   pip install -r requirements.txt
+   ```
+3. Create `.env` file with:
+   ```
+   SECRET_KEY=your-secret-key
+   ADMIN_USER=admin
+   ADMIN_PASS=admin123
+   ```
+4. Run setup:
+   ```bash
+   python quick_fix.py
+   ```
+5. Configure WSGI file (see `PYTHONANYWHERE_FIX.md`)
+6. Reload web app
+
+**Other Platforms:**
 - **Heroku**: Free tier with SQLite
 - **AWS EC2**: Full control VPS
 - **DigitalOcean**: Cost-effective droplets
