@@ -18,11 +18,21 @@ from security import (
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = config('SECRET_KEY', default='dev-key-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = config('SQLALCHEMY_DATABASE_URI', default='sqlite:///wegatsaucee.db')
+
+# Fix database path for both local and production
+db_uri = config('SQLALCHEMY_DATABASE_URI', default='sqlite:///instance/wegatsaucee.db')
+if not db_uri.startswith('sqlite:////'):  # Not absolute path
+    if 'sqlite:///' in db_uri and 'instance/' not in db_uri:
+        db_uri = db_uri.replace('sqlite:///', 'sqlite:///instance/')
+app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB max file size
 app.config['RECAPTCHA_SECRET_KEY'] = 'YOUR_SECRET_KEY_HERE'
+
+# Create instance folder if it doesn't exist
+os.makedirs('instance', exist_ok=True)
 
 # Initialize payment processors (TEST MODE)
 mpesa = MpesaPayment()
