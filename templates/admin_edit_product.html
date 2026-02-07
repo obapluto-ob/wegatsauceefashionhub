@@ -99,7 +99,7 @@
             <p class="text-xs text-gray-600 mt-1">Select multiple images to add to existing ones</p>
         </div>
         
-        <div class="mt-8 flex space-x-4">
+        <div class="mt-8 flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
             <button type="submit" 
                     class="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-6 rounded-lg hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 font-semibold shadow-lg">
                 Update Product
@@ -108,6 +108,10 @@
                class="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-400 transition-all text-center font-semibold">
                 Cancel
             </a>
+            <button type="button" onclick="deleteProduct({{ product.id }})"
+                    class="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-all font-semibold">
+                Delete Product
+            </button>
         </div>
     </form>
 </div>
@@ -120,6 +124,16 @@ function removeImage(imageUrl, productId) {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({product_id: productId, image_url: imageUrl})
         }).then(() => location.reload());
+    }
+}
+
+function deleteProduct(productId) {
+    if (confirm('⚠️ DELETE ENTIRE PRODUCT?\n\nThis will permanently remove:\n- Product details\n- All images\n- Cannot be undone\n\nAre you sure?')) {
+        fetch('/admin/delete_product/' + productId, {
+            method: 'POST'
+        }).then(() => {
+            window.location.href = '/admin';
+        });
     }
 }
 

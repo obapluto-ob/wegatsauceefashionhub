@@ -16,7 +16,7 @@ app.config['SECRET_KEY'] = config('SECRET_KEY', default='dev-key-change-in-produ
 app.config['SQLALCHEMY_DATABASE_URI'] = config('SQLALCHEMY_DATABASE_URI', default='sqlite:///wegatsaucee.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB max file size
 app.config['RECAPTCHA_SECRET_KEY'] = 'YOUR_SECRET_KEY_HERE'
 
 # Initialize payment processors (TEST MODE)
