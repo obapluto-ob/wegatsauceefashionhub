@@ -745,11 +745,75 @@ def admin_backup():
     import shutil
     from datetime import datetime
     
-    # Create backup
-    backup_name = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
-    shutil.copy('instance/wegatsaucee.db', f'instance/{backup_name}')
+    try:
+        # Create backup
+        backup_name = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+        shutil.copy('wegatsaucee.db', f'backups/{backup_name}')
+        return jsonify({'success': True, 'backup': backup_name})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/admin/export/products')
+def admin_export_products():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
     
-    return jsonify({'success': True, 'backup': backup_name})
+    import csv
+    from io import StringIO
+    from flask import Response
+    
+    try:
+        products = Product.query.all()
+        
+        # Create CSV
+        si = StringIO()
+        writer = csv.writer(si)
+        writer.writerow(['ID', 'Name', 'Price', 'Category', 'Gender', 'Stock', 'Description'])
+        
+        for p in products:
+            writer.writerow([p.id, p.name, p.price, p.category, p.gender, p.stock, p.description])
+        
+        output = si.getvalue()
+        si.close()
+        
+        return Response(
+            output,
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=products.csv'}
+        )
+    except Exception as e:
+        return f"Error exporting products: {str(e)}", 500
+
+@app.route('/admin/export/users')
+def admin_export_users():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    import csv
+    from io import StringIO
+    from flask import Response
+    
+    try:
+        users = User.query.all()
+        
+        # Create CSV
+        si = StringIO()
+        writer = csv.writer(si)
+        writer.writerow(['ID', 'Name', 'Email', 'Phone', 'Tier', 'Points', 'Created'])
+        
+        for u in users:
+            writer.writerow([u.id, u.name, u.email, u.phone, u.tier, u.points, u.created_at.strftime('%Y-%m-%d')])
+        
+        output = si.getvalue()
+        si.close()
+        
+        return Response(
+            output,
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=users.csv'}
+        )
+    except Exception as e:
+        return f"Error exporting users: {str(e)}", 500
 
 @app.route('/admin/settings')
 def admin_settings():

@@ -51,10 +51,43 @@
 </div>
 
 <script>
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
+    errorDiv.innerHTML = `
+        <div class="flex items-center gap-2">
+            <span>⚠️ ${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">×</button>
+        </div>
+    `;
+    document.body.appendChild(errorDiv);
+    setTimeout(() => errorDiv.remove(), 5000);
+}
+
+function showSuccess(message) {
+    const successDiv = document.createElement('div');
+    successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
+    successDiv.innerHTML = `
+        <div class="flex items-center gap-2">
+            <span>✓ ${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">×</button>
+        </div>
+    `;
+    document.body.appendChild(successDiv);
+    setTimeout(() => successDiv.remove(), 3000);
+}
+
 function backupData() {
-    fetch('/admin/backup').then(r => r.json()).then(d => {
-        alert('Backup created: ' + d.backup);
-    });
+    fetch('/admin/backup')
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                showSuccess('Backup created: ' + d.backup);
+            } else {
+                showError('Backup failed: ' + d.error);
+            }
+        })
+        .catch(e => showError('Backup failed: ' + e.message));
 }
 
 function exportProducts() {
@@ -67,12 +100,30 @@ function exportUsers() {
 
 function clearLogs() {
     if(confirm('Clear all logs?')) {
-        fetch('/admin/clear_logs', {method: 'POST'}).then(() => alert('Logs cleared'));
+        fetch('/admin/clear_logs', {method: 'POST'})
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    showSuccess('Logs cleared successfully');
+                } else {
+                    showError('Failed to clear logs');
+                }
+            })
+            .catch(e => showError('Error: ' + e.message));
     }
 }
 
 function optimizeDB() {
-    fetch('/admin/optimize', {method: 'POST'}).then(() => alert('Database optimized'));
+    fetch('/admin/optimize', {method: 'POST'})
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                showSuccess('Database optimized successfully');
+            } else {
+                showError('Optimization failed: ' + d.message);
+            }
+        })
+        .catch(e => showError('Error: ' + e.message));
 }
 </script>
 {% endblock %}
