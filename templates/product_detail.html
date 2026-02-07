@@ -76,38 +76,12 @@
     <div class="bg-white rounded-lg shadow-md p-6 mb-8">
         <h2 class="text-2xl font-bold mb-6">Customer Reviews</h2>
         
-        <!-- Add Review Form -->
-        {% if session.user_id %}
-        <div class="bg-orange-50 rounded-lg p-6 mb-6">
-            <h3 class="text-lg font-bold mb-4">Write a Review</h3>
-            <form id="reviewForm">
-                <div class="mb-4">
-                    <label class="block font-semibold mb-2">Rating</label>
-                    <div class="flex gap-2">
-                        {% for i in range(1, 6) %}
-                        <button type="button" onclick="setRating({{ i }})" class="star-btn">
-                            <svg class="w-8 h-8 text-gray-300 hover:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                            </svg>
-                        </button>
-                        {% endfor %}
-                    </div>
-                    <input type="hidden" id="rating" value="0">
-                </div>
-                <div class="mb-4">
-                    <label class="block font-semibold mb-2">Your Review</label>
-                    <textarea id="comment" rows="4" class="w-full border rounded-lg p-3" placeholder="Share your experience with this product..."></textarea>
-                </div>
-                <button type="button" onclick="submitReview()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
-                    Submit Review
-                </button>
-            </form>
+        <div class="bg-blue-50 rounded-lg p-4 mb-6">
+            <p class="text-sm text-blue-800">
+                <strong>ℹ️ How to leave a review:</strong> Reviews are automatically created when you confirm delivery of your order. 
+                Rate your experience and upload a photo when your order arrives!
+            </p>
         </div>
-        {% else %}
-        <div class="bg-gray-100 rounded-lg p-6 mb-6 text-center">
-            <p class="text-gray-600">Please <a href="/login" class="text-purple-600 hover:underline">login</a> to write a review</p>
-        </div>
-        {% endif %}
         
         <!-- Existing Reviews -->
         {% if reviews %}
@@ -136,55 +110,6 @@
 </div>
 
 <script>
-let selectedRating = 0;
-
-function setRating(rating) {
-    selectedRating = rating;
-    document.getElementById('rating').value = rating;
-    
-    // Update star colors
-    const stars = document.querySelectorAll('.star-btn svg');
-    stars.forEach((star, index) => {
-        if (index < rating) {
-            star.classList.remove('text-gray-300');
-            star.classList.add('text-yellow-400');
-        } else {
-            star.classList.remove('text-yellow-400');
-            star.classList.add('text-gray-300');
-        }
-    });
-}
-
-function submitReview() {
-    const rating = selectedRating;
-    const comment = document.getElementById('comment').value;
-    
-    if (rating === 0) {
-        alert('Please select a rating');
-        return;
-    }
-    
-    if (!comment.trim()) {
-        alert('Please write a review');
-        return;
-    }
-    
-    fetch('/product/{{ product.id }}/review', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({rating: rating, comment: comment})
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert('Review submitted successfully!');
-            location.reload();
-        } else {
-            alert(data.error || 'Failed to submit review');
-        }
-    });
-}
-
 function changeQty(change) {
     const input = document.getElementById('qty');
     let val = parseInt(input.value) + change;

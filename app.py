@@ -997,6 +997,7 @@ def admin_delete_product(product_id):
 @app.route('/track/<int:order_id>')
 def track_order(order_id):
     order = Order.query.get_or_404(order_id)
+    # Public tracking - anyone can view with order ID (like FedEx)
     return render_template('track_order.html', order=order)
 
 @app.route('/admin/orders')
@@ -1107,6 +1108,7 @@ def confirm_delivery(order_id):
     rating = int(request.form['rating'])
     feedback = request.form['feedback']
     
+    # Create delivery confirmation
     confirmation = DeliveryConfirmation(
         order_id=order_id,
         user_id=session['user_id'],
@@ -1115,6 +1117,25 @@ def confirm_delivery(order_id):
         feedback=feedback
     )
     db.session.add(confirmation)
+    
+    # Auto-create review from delivery confirmation
+    try:
+        items = json.loads(order.items)
+        for item in items:
+            product_id = item.get('id')
+            if product_id:
+                # Check if review already exists
+                existing_review = Review.query.filter_by(product_id=product_id, user_id=session['user_id']).first()
+                if not existing_review:
+                    review = Review(
+                        product_id=product_id,
+                        user_id=session['user_id'],
+                        rating=rating,
+                        comment=feedback
+                    )
+                    db.session.add(review)
+    except:
+        pass
     
     # Award points for completing delivery flow
     user = order.user
