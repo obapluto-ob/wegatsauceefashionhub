@@ -10,7 +10,11 @@
     </div>
     {% endif %}
     
-    <form method="POST">
+    <form method="POST" id="registerForm">
+        <!-- Honeypot field (hidden from users, bots will fill it) -->
+        <input type="text" name="website" style="display:none" tabindex="-1" autocomplete="off">
+        <input type="hidden" name="form_start_time" id="form_start_time">
+        
         <div class="mb-4">
             <label class="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
             <input type="text" name="name" id="name" required 
@@ -79,6 +83,11 @@
 </div>
 
 <script>
+// Record form start time for bot detection
+window.addEventListener('load', function() {
+    document.getElementById('form_start_time').value = new Date().toISOString();
+});
+
 function togglePassword(fieldId) {
     const field = document.getElementById(fieldId);
     const icon = document.getElementById(fieldId + '-icon');

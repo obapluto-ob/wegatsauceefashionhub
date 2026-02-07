@@ -10,6 +10,11 @@ from collections import defaultdict
 from payments import MpesaPayment, FlutterwavePayment, detect_payment_method
 from decouple import config
 from logger import system_logger
+from security import (
+    validate_email_format, is_disposable_email, validate_password_strength,
+    check_honeypot, check_form_timing, check_account_lockout,
+    record_failed_attempt, clear_failed_attempts
+)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = config('SECRET_KEY', default='dev-key-change-in-production')
@@ -351,10 +356,15 @@ def register():
         if not check_rate_limit(ip, 'register'):
             return render_template('register.html', error='Too many registration attempts. Try again later.')
         
-        # Verify reCAPTCHA (temporarily disabled)
-        # recaptcha_response = request.form.get('g-recaptcha-response')
-        # if not recaptcha_response or not verify_recaptcha(recaptcha_response):
-        #     return render_template('register.html', error='Please complete the reCAPTCHA verification')
+        # Bot detection - Honeypot
+        honeypot = request.form.get('website', '')
+        if honeypot != '':
+            return render_template('register.html', error='Invalid submission')
+        
+        # Bot detection - Form timing
+        form_start = request.form.get('form_start_time')
+        if not check_form_timing(form_start):
+            return render_template('register.html', error='Please take your time filling the form')
         
         email = request.form['email']
         password = request.form['password']
@@ -363,6 +373,18 @@ def register():
         phone = request.form['phone']
         country_code = request.form.get('country_code', 'ke')
         currency = request.form.get('currency', 'KSh')
+        
+        # Email validation
+        if not validate_email_format(email):
+            return render_template('register.html', error='Invalid email format')
+        
+        if is_disposable_email(email):
+            return render_template('register.html', error='Disposable email addresses are not allowed')
+        
+        # Password validation
+        is_strong, msg = validate_password_strength(password)
+        if not is_strong:
+            return render_template('register.html', error=msg)
         
         # Check if passwords match
         if password != confirm_password:
@@ -409,21 +431,28 @@ def register():
 def login():
     if request.method == 'POST':
         ip = request.environ.get('REMOTE_ADDR')
+        email = request.form['email']
+        
+        # Check account lockout
+        is_locked, attempts = check_account_lockout(email)
+        if is_locked:
+            return render_template('login.html', error=f'Account locked due to {attempts} failed attempts. Try again in 15 minutes.')
         
         # Rate limiting for login attempts
         if not check_rate_limit(ip, 'login', limit=5, window=900):  # 5 attempts per 15 min
             return render_template('login.html', error='Too many login attempts. Try again later.')
         
-        email = request.form['email']
         password = request.form['password']
         
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password_hash, password):
+            clear_failed_attempts(email)
             session['user_id'] = user.id
             system_logger.log('INFO', f'User login: {email}', user_id=user.id, ip=ip)
             return redirect(url_for('user_dashboard'))
         
         # Record failed login attempt
+        record_failed_attempt(email)
         login_attempts[ip].append(datetime.utcnow())
         system_logger.log('WARNING', f'Failed login: {email}', ip=ip)
         return render_template('login.html', error='Invalid credentials')
@@ -1045,6 +1074,12 @@ def admin_add_tracking():
     )
     db.session.add(tracking)
     db.session.commit()
+    
+    # Send tracking update email
+    order = Order.query.get(order_id)
+    if order and order.user:
+        from email_notifications import send_tracking_update
+        send_tracking_update(order.user, order, tracking)
     
     return redirect(url_for('admin_orders'))
 

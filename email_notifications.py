@@ -75,3 +75,32 @@ def send_shipping_notification(user, order):
     </html>
     """
     return send_email(user.email, f"Order #{order.id} Shipped! - Wegatsaucee", html)
+
+def send_tracking_update(user, order, tracking):
+    """Send tracking update email"""
+    html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">📍 Order Update</h1>
+        </div>
+        <div style="padding: 30px; background: #f9f9f9;">
+            <p>Hi {user.name},</p>
+            <p>Your order has a new update!</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <h2 style="color: #4facfe;">Order #{order.id}</h2>
+                <p><strong>Location:</strong> {tracking.location}</p>
+                <p><strong>Transport:</strong> {tracking.transport_company}</p>
+                <p><strong>Driver:</strong> {tracking.driver_name}</p>
+                <p><strong>Status:</strong> {tracking.status}</p>
+                <p><strong>Updated:</strong> {tracking.updated_at.strftime('%B %d, %Y at %I:%M %p')}</p>
+            </div>
+            
+            <p>Track your order: <a href="https://emonigatsaucee.pythonanywhere.com/track/{order.id}">Click here</a></p>
+            <p style="margin-top: 30px;">Best regards,<br><strong>Wegatsaucee Fashion Hub</strong></p>
+        </div>
+    </body>
+    </html>
+    """
+    return send_email(user.email, f"Order #{order.id} Update - {tracking.location} - Wegatsaucee", html)
