@@ -77,6 +77,59 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white mt-16">
+        <div class="max-w-7xl mx-auto px-4 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- About -->
+                <div>
+                    <h3 class="text-xl font-bold mb-4 text-orange-400">Wegatsaucee</h3>
+                    <p class="text-gray-400 text-sm">Your premier destination for fashion excellence. Quality products, exceptional service.</p>
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-bold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="/about" class="text-gray-400 hover:text-orange-400">About Us</a></li>
+                        <li><a href="/contact" class="text-gray-400 hover:text-orange-400">Contact</a></li>
+                        <li><a href="/products" class="text-gray-400 hover:text-orange-400">Shop</a></li>
+                        <li><a href="#" onclick="showTrackModal()" class="text-gray-400 hover:text-orange-400">Track Order</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Policies -->
+                <div>
+                    <h4 class="font-bold mb-4">Policies</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="/privacy-policy" class="text-gray-400 hover:text-orange-400">Privacy Policy</a></li>
+                        <li><a href="/terms" class="text-gray-400 hover:text-orange-400">Terms & Conditions</a></li>
+                        <li><a href="/return-policy" class="text-gray-400 hover:text-orange-400">Return Policy</a></li>
+                        <li><a href="/shipping-policy" class="text-gray-400 hover:text-orange-400">Shipping Policy</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Newsletter -->
+                <div>
+                    <h4 class="font-bold mb-4">Newsletter</h4>
+                    <p class="text-gray-400 text-sm mb-3">Get updates on new products & offers</p>
+                    <form id="newsletterForm" class="space-y-2">
+                        <input type="email" id="newsletterEmail" placeholder="Your email" required
+                               class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm focus:outline-none focus:border-orange-400">
+                        <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded text-sm font-semibold transition-all">
+                            Subscribe
+                        </button>
+                    </form>
+                    <p id="newsletterMessage" class="text-xs mt-2"></p>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
+                <p>&copy; 2024 Wegatsaucee Fashion Hub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
     <!-- Track Order Modal -->
     <div id="trackModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
@@ -128,6 +181,28 @@
     document.addEventListener('DOMContentLoaded', updateCartBadge);
     // Update cart badge when storage changes (from other tabs/windows)
     window.addEventListener('storage', updateCartBadge);
+    
+    // Newsletter subscription
+    document.getElementById('newsletterForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('newsletterEmail').value;
+        const message = document.getElementById('newsletterMessage');
+        
+        try {
+            const response = await fetch('/newsletter/subscribe', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email})
+            });
+            const data = await response.json();
+            message.textContent = data.message;
+            message.className = data.success ? 'text-xs mt-2 text-green-400' : 'text-xs mt-2 text-red-400';
+            if (data.success) document.getElementById('newsletterEmail').value = '';
+        } catch (error) {
+            message.textContent = 'Error subscribing. Try again.';
+            message.className = 'text-xs mt-2 text-red-400';
+        }
+    });
     </script>
 </body>
 </html>

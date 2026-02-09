@@ -161,6 +161,12 @@ class Coupon(db.Model):
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class Newsletter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    subscribed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    active = db.Column(db.Boolean, default=True)
+
 # Routes
 def get_user_currency():
     """Get current user's currency or default to KSh"""
@@ -1794,6 +1800,55 @@ def admin_toggle_coupon(id):
     db.session.commit()
     
     return redirect(url_for('admin_coupons'))
+
+@app.route('/newsletter/subscribe', methods=['POST'])
+def newsletter_subscribe():
+    email = request.json.get('email')
+    if not email:
+        return jsonify({'success': False, 'message': 'Email required'})
+    
+    existing = Newsletter.query.filter_by(email=email).first()
+    if existing:
+        if existing.active:
+            return jsonify({'success': False, 'message': 'Already subscribed'})
+        existing.active = True
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Resubscribed successfully!'})
+    
+    newsletter = Newsletter(email=email)
+    db.session.add(newsletter)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Subscribed successfully!'})
+
+@app.route('/about')
+def about():
+    current_user = db.session.get(User, session['user_id']) if 'user_id' in session else None
+    return render_template('about.html', current_user=current_user)
+
+@app.route('/contact')
+def contact():
+    current_user = db.session.get(User, session['user_id']) if 'user_id' in session else None
+    return render_template('contact.html', current_user=current_user)
+
+@app.route('/privacy-policy')
+def privacy_policy():
+    current_user = db.session.get(User, session['user_id']) if 'user_id' in session else None
+    return render_template('privacy_policy.html', current_user=current_user)
+
+@app.route('/terms')
+def terms():
+    current_user = db.session.get(User, session['user_id']) if 'user_id' in session else None
+    return render_template('terms.html', current_user=current_user)
+
+@app.route('/return-policy')
+def return_policy():
+    current_user = db.session.get(User, session['user_id']) if 'user_id' in session else None
+    return render_template('return_policy.html', current_user=current_user)
+
+@app.route('/shipping-policy')
+def shipping_policy():
+    current_user = db.session.get(User, session['user_id']) if 'user_id' in session else None
+    return render_template('shipping_policy.html', current_user=current_user)
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():

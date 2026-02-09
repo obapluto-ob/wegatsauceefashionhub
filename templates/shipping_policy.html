@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold mb-6">Shipping Policy</h1>
+    <div class="bg-white rounded-lg shadow-md p-8 space-y-6">
+        <section>
+            <h2 class="text-2xl font-bold mb-3">Delivery Information</h2>
+            <p>We ship to all locations in Kenya and East Africa. Delivery times vary by location.</p>
+        </section>
+        
+        <section>
+            <h3 class="text-xl font-bold mb-2">Shipping Rates</h3>
+            <div class="space-y-2">
+                <p><strong>Orders under KSh 2,000:</strong> KSh 300</p>
+                <p><strong>Orders KSh 2,000 - 4,999:</strong> KSh 400</p>
+                <p><strong>Orders KSh 5,000+:</strong> KSh 500</p>
+                <p class="text-green-600 font-bold">Gold Members: FREE shipping on orders over KSh 6,000</p>
+                <p class="text-purple-600 font-bold">Platinum Members: 1 FREE shipping per month</p>
+            </div>
+        </section>
+        
+        <section>
+            <h3 class="text-xl font-bold mb-2">Delivery Times</h3>
+            <ul class="list-disc list-inside space-y-2">
+                <li><strong>Nairobi:</strong> 1-3 business days</li>
+                <li><strong>Major Cities:</strong> 3-5 business days</li>
+                <li><strong>Remote Areas:</strong> 5-10 business days</li>
+                <li><strong>International:</strong> 7-14 business days</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h3 class="text-xl font-bold mb-2">Order Tracking</h3>
+            <p>Once your order ships, you'll receive tracking information via email and can track your order on our website.</p>
+            <a href="#" onclick="showTrackModal()" class="inline-block mt-2 bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600">Track Order</a>
+        </section>
+        
+        <section>
+            <h3 class="text-xl font-bold mb-2">Shipping Partners</h3>
+            <p>We work with trusted courier services including:</p>
+            <ul class="list-disc list-inside space-y-1 mt-2">
+                <li>G4S Courier</li>
+                <li>DHL</li>
+                <li>Posta Kenya</li>
+                <li>Local matatu services for remote areas</li>
+            </ul>
+        </section>
+        
+        <div class="bg-orange-100 p-4 rounded-lg mt-6">
+            <p class="font-bold">Questions about shipping?</p>
+            <p>Contact us on WhatsApp: <a href="https://wa.me/254729453903" class="text-green-600 hover:underline">+254 729 453 903</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
