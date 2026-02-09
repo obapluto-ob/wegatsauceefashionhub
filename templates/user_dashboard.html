@@ -148,7 +148,7 @@
             {% endfor %}
             {% if orders|length > 3 %}
                 <div class="text-center mt-4">
-                    <button class="text-red-600 hover:underline font-semibold">View All Orders ({{ orders|length }})</button>
+                    <a href="/orders" class="text-red-600 hover:underline font-semibold">View All Orders ({{ orders|length }})</a>
                 </div>
             {% endif %}
         {% else %}

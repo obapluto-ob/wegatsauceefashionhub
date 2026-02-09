@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-3xl font-bold text-gray-800">My Orders</h2>
+    <p class="text-gray-600">View and track all your orders</p>
+</div>
+
+{% if orders %}
+    <div class="space-y-4">
+        {% for order in orders %}
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                        <h3 class="text-xl font-bold text-gray-800">Order #{{ order.id }}</h3>
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold
+                            {% if order.status == 'delivered' %}bg-green-100 text-green-800
+                            {% elif order.status == 'shipped' %}bg-blue-100 text-blue-800
+                            {% elif order.status == 'processing' %}bg-yellow-100 text-yellow-800
+                            {% elif order.status == 'paid' %}bg-purple-100 text-purple-800
+                            {% elif order.status == 'cancelled' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ order.status.title() }}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
+                        <p><span class="font-semibold">Date:</span> {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        <p><span class="font-semibold">Total:</span> <span class="text-red-600 font-bold">KSh {{ "{:,.0f}".format(order.total) }}</span></p>
+                        {% if order.expected_delivery %}
+                        <p><span class="font-semibold">Expected Delivery:</span> {{ order.expected_delivery.strftime('%B %d, %Y') }}</p>
+                        {% endif %}
+                        <p><span class="font-semibold">Payment:</span> {{ order.payment_method.title() }}</p>
+                    </div>
+
+                    <!-- Order Items -->
+                    <div class="border-t pt-3 mt-3">
+                        <p class="text-sm font-semibold text-gray-700 mb-2">Items:</p>
+                        <div class="space-y-2">
+                            {% set items = order.items|from_json %}
+                            {% for item in items %}
+                            <div class="flex items-center gap-3 text-sm">
+                                {% if item.image_url %}
+                                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-12 h-12 object-cover rounded">
+                                {% endif %}
+                                <div>
+                                    <p class="font-semibold">{{ item.name }}</p>
+                                    <p class="text-gray-600">Qty: {{ item.quantity }} × KSh {{ "{:,.0f}".format(item.price) }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2 w-full md:w-auto">
+                    <a href="/track/{{ order.id }}" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-all text-center font-semibold">
+                        Track Order
+                    </a>
+                    {% if order.status == 'pending' %}
+                    <button onclick="cancelOrder({{ order.id }})" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-all text-center font-semibold">
+                        Cancel Order
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <svg class="w-24 h-24 mx-auto mb-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M7 18C5.9 18 5 18.9 5 20S5.9 22 7 22 9 21.1 9 20 8.1 18 7 18ZM1 2V4H3L6.6 11.59L5.25 14.04C5.09 14.32 5 14.65 5 15C5 16.1 5.9 17 7 17H19V15H7.42C7.28 15 7.17 14.89 7.17 14.75L7.2 14.63L8.1 13H15.55C16.3 13 16.96 12.59 17.3 11.97L20.88 5H5.21L4.27 3H1ZM17 18C15.9 18 15 18.9 15 20S15.9 22 17 22 19 21.1 19 20 18.1 18 17 18Z"/>
+        </svg>
+        <h3 class="text-2xl font-bold text-gray-800 mb-2">No Orders Yet</h3>
+        <p class="text-gray-600 mb-6">Start shopping to see your orders here</p>
+        <a href="/products" class="inline-block bg-gradient-to-r from-red-500 to-orange-500 text-white px-8 py-3 rounded-lg hover:from-red-600 hover:to-orange-600 transition-all font-semibold">
+            Browse Products
+        </a>
+    </div>
+{% endif %}
+
+<script>
+function cancelOrder(orderId) {
+    if (confirm('Are you sure you want to cancel this order?')) {
+        fetch(`/cancel_order/${orderId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to cancel order');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

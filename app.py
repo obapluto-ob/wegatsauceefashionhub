@@ -572,6 +572,16 @@ def user_dashboard():
                          active_orders=active_orders,
                          current_user=current_user)
 
+@app.route('/orders')
+def user_orders():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    current_user = db.session.get(User, session['user_id'])
+    orders = Order.query.filter_by(user_id=session['user_id']).order_by(Order.created_at.desc()).all()
+    
+    return render_template('orders.html', orders=orders, current_user=current_user)
+
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
