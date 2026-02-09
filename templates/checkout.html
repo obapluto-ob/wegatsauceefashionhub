@@ -148,10 +148,10 @@ function placeOrder() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Clear cart first
+            // Clear cart
             localStorage.removeItem('cart');
             
-            // Redirect to WhatsApp (user can come back to site)
+            // Redirect to WhatsApp - user will see payment-pending page when they return
             window.location.href = data.whatsapp_url;
         } else {
             document.getElementById('payment-content').innerHTML = `

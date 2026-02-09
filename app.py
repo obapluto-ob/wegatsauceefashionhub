@@ -168,6 +168,26 @@ class Newsletter(db.Model):
     active = db.Column(db.Boolean, default=True)
 
 # Routes
+@app.before_request
+def check_pending_payment():
+    """Redirect logged-in users with pending orders to payment confirmation page"""
+    # Skip for certain routes
+    excluded_routes = ['payment_pending', 'api_order_status', 'logout', 'static', 'admin_login', 'admin_logout']
+    if any(route in request.endpoint for route in excluded_routes if request.endpoint):
+        return
+    
+    # Only check for logged-in users
+    if 'user_id' in session:
+        # Check if user has any pending orders
+        pending_order = Order.query.filter_by(
+            user_id=session['user_id'],
+            status='pending'
+        ).order_by(Order.created_at.desc()).first()
+        
+        # If pending order exists, redirect to payment-pending page
+        if pending_order and request.endpoint not in ['payment_pending', 'api_order_status']:
+            return redirect(url_for('payment_pending', order_id=pending_order.id))
+
 def get_user_currency():
     """Get current user's currency or default to KSh"""
     if 'user_id' in session:
@@ -1578,7 +1598,7 @@ def api_order_status(order_id):
 def payment_pending(order_id):
     """Real-time payment confirmation page"""
     order = Order.query.get_or_404(order_id)
-    # Only show if order is pending
+    # If payment confirmed, redirect to tracking page
     if order.status != 'pending':
         return redirect(url_for('track_order', order_id=order_id))
     return render_template('payment_pending.html', order=order)
@@ -1717,8 +1737,7 @@ def checkout():
     return jsonify({
         'success': True,
         'whatsapp_url': whatsapp_url,
-        'order_id': order.id,
-        'redirect_url': url_for('payment_pending', order_id=order.id)
+        'order_id': order.id
     })
 
 # Helper function to update user tier
