@@ -148,14 +148,11 @@ function placeOrder() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Open WhatsApp in new tab
-            window.open(data.whatsapp_url, '_blank');
-            
-            // Redirect to payment pending page
-            window.location.href = data.redirect_url;
-            
-            // Clear cart
+            // Clear cart first
             localStorage.removeItem('cart');
+            
+            // Redirect to WhatsApp (user can come back to site)
+            window.location.href = data.whatsapp_url;
         } else {
             document.getElementById('payment-content').innerHTML = `
                 <div class="text-red-600 mb-4">
