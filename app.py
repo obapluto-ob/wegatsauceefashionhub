@@ -1563,6 +1563,26 @@ def profile():
     
     return render_template('profile.html', user=user)
 
+@app.route('/api/order-status/<int:order_id>')
+def api_order_status(order_id):
+    """API endpoint for real-time order status checking"""
+    order = Order.query.get_or_404(order_id)
+    return jsonify({
+        'order_id': order.id,
+        'status': order.status,
+        'total': order.total,
+        'expected_delivery': order.expected_delivery.strftime('%B %d, %Y') if order.expected_delivery else None
+    })
+
+@app.route('/payment-pending/<int:order_id>')
+def payment_pending(order_id):
+    """Real-time payment confirmation page"""
+    order = Order.query.get_or_404(order_id)
+    # Only show if order is pending
+    if order.status != 'pending':
+        return redirect(url_for('track_order', order_id=order_id))
+    return render_template('payment_pending.html', order=order)
+
 @app.route('/checkout', methods=['POST'])
 def checkout():
     if 'user_id' not in session:
@@ -1697,7 +1717,8 @@ def checkout():
     return jsonify({
         'success': True,
         'whatsapp_url': whatsapp_url,
-        'order_id': order.id
+        'order_id': order.id,
+        'redirect_url': url_for('payment_pending', order_id=order.id)
     })
 
 # Helper function to update user tier

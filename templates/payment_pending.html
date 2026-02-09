@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Payment - Wegatsaucee</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .pulse-ring {
+            animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            animation: confetti 3s ease-in-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Pending State -->
+        <div id="pending-state" class="bg-white rounded-3xl shadow-2xl p-8 text-center">
+            <div class="relative inline-block mb-6">
+                <div class="absolute inset-0 bg-purple-400 rounded-full pulse-ring"></div>
+                <div class="relative bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-6">
+                    <svg class="w-16 h-16 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Processing Payment</h1>
+            <p class="text-gray-600 mb-6">Waiting for admin confirmation...</p>
+            
+            <div class="bg-purple-50 rounded-2xl p-6 mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-600">Order #</span>
+                    <span class="font-bold text-purple-600">{{ order.id }}</span>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-600">Total</span>
+                    <span class="font-bold text-2xl text-gray-800">KSh {{ "{:,.0f}".format(order.total) }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Status</span>
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+                        ⏳ Pending
+                    </span>
+                </div>
+            </div>
+            
+            <div class="space-y-3 text-left mb-6">
+                <div class="flex items-start gap-3">
+                    <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">Order Placed</p>
+                        <p class="text-sm text-gray-500">Your order has been received</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                    <div class="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 animate-pulse">
+                        <div class="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">Awaiting Payment</p>
+                        <p class="text-sm text-gray-500">Admin is verifying your payment</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start gap-3 opacity-40">
+                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex-shrink-0 mt-0.5"></div>
+                    <div>
+                        <p class="font-medium text-gray-800">Payment Confirmed</p>
+                        <p class="text-sm text-gray-500">Order will be processed</p>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="text-sm text-gray-500">
+                💡 This page will automatically update when payment is confirmed
+            </p>
+        </div>
+        
+        <!-- Success State (Hidden initially) -->
+        <div id="success-state" class="bg-white rounded-3xl shadow-2xl p-8 text-center hidden">
+            <div class="mb-6">
+                <div class="inline-block bg-gradient-to-br from-green-400 to-emerald-500 rounded-full p-6 mb-4">
+                    <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Payment Confirmed! 🎉</h1>
+                <p class="text-gray-600">Your order is now being processed</p>
+            </div>
+            
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-600">Order #</span>
+                    <span class="font-bold text-green-600">{{ order.id }}</span>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-600">Amount Paid</span>
+                    <span class="font-bold text-2xl text-gray-800">KSh {{ "{:,.0f}".format(order.total) }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Status</span>
+                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                        ✓ Paid
+                    </span>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 rounded-2xl p-4 mb-6">
+                <p class="text-sm text-blue-800 mb-2">📦 <strong>Expected Delivery</strong></p>
+                <p class="text-lg font-bold text-blue-900">{{ order.expected_delivery.strftime('%B %d, %Y') }}</p>
+            </div>
+            
+            <div class="space-y-3">
+                <a href="/track/{{ order.id }}" class="block w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-medium hover:shadow-lg transition">
+                    📍 Track Your Order
+                </a>
+                <a href="/dashboard" class="block w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition">
+                    View Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const orderId = {{ order.id }};
+        let checkCount = 0;
+        
+        // Check payment status every 3 seconds
+        const checkInterval = setInterval(async () => {
+            checkCount++;
+            
+            try {
+                const response = await fetch(`/api/order-status/${orderId}`);
+                const data = await response.json();
+                
+                if (data.status === 'paid' || data.status === 'processing') {
+                    clearInterval(checkInterval);
+                    showSuccess();
+                }
+                
+                // Stop checking after 10 minutes (200 checks)
+                if (checkCount > 200) {
+                    clearInterval(checkInterval);
+                }
+            } catch (error) {
+                console.error('Error checking status:', error);
+            }
+        }, 3000);
+        
+        function showSuccess() {
+            // Create confetti
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => createConfetti(), i * 30);
+            }
+            
+            // Switch views
+            setTimeout(() => {
+                document.getElementById('pending-state').classList.add('hidden');
+                document.getElementById('success-state').classList.remove('hidden');
+            }, 500);
+        }
+        
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.backgroundColor = ['#8B5CF6', '#EC4899', '#10B981', '#F59E0B'][Math.floor(Math.random() * 4)];
+            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => confetti.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
