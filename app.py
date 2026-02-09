@@ -276,6 +276,26 @@ def products():
     
     return render_template('products.html', products=products, currency=currency, current_user=current_user)
 
+@app.route('/search')
+def search():
+    query = request.args.get('q', '')
+    if not query:
+        return redirect(url_for('products'))
+    
+    products = Product.query.filter(
+        Product.name.ilike(f'%{query}%') | 
+        Product.description.ilike(f'%{query}%') |
+        Product.category.ilike(f'%{query}%')
+    ).all()
+    
+    currency = get_user_currency()
+    current_user = db.session.get(User, session['user_id']) if 'user_id' in session else None
+    
+    for product in products:
+        product.display_price = convert_price(product.price, currency)
+    
+    return render_template('products.html', products=products, currency=currency, current_user=current_user, search_query=query)
+
 @app.route('/product/<int:id>')
 def product_detail(id):
     product = db.session.get(Product, id)
@@ -474,6 +494,35 @@ def register():
         )
         db.session.add(user)
         db.session.commit()
+        
+        # Send welcome email
+        try:
+            from email_notifications import send_email
+            welcome_html = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0;">Welcome to Wegatsaucee! 🎉</h1>
+                </div>
+                <div style="padding: 30px; background: #f9f9f9;">
+                    <p>Hi {name},</p>
+                    <p>Welcome to Wegatsaucee Fashion Hub! We're excited to have you join our fashion community.</p>
+                    <p>Your account has been created successfully. You can now:</p>
+                    <ul>
+                        <li>Browse our latest fashion collections</li>
+                        <li>Earn points with every purchase</li>
+                        <li>Track your orders in real-time</li>
+                        <li>Get exclusive member benefits</li>
+                    </ul>
+                    <p>Start shopping now and earn your first points!</p>
+                    <p style="margin-top: 30px;">Best regards,<br><strong>Wegatsaucee Fashion Hub Team</strong></p>
+                </div>
+            </body>
+            </html>
+            """
+            send_email(email, "Welcome to Wegatsaucee Fashion Hub!", welcome_html)
+        except Exception as e:
+            print(f"Welcome email error: {e}")
         
         # Record successful registration
         registration_attempts[ip].append(datetime.utcnow())
@@ -1185,6 +1234,14 @@ def admin_update_order_status():
             user.points += points_earned
             update_user_tier(user)
         
+        # Send shipping notification email
+        if status == 'shipped' and old_status != 'shipped':
+            try:
+                from email_notifications import send_shipping_notification
+                send_shipping_notification(order.user, order)
+            except Exception as e:
+                print(f"Email error: {e}")
+        
         db.session.commit()
     
     return redirect(url_for('admin_orders'))
@@ -1578,6 +1635,13 @@ def checkout():
     
     db.session.commit()
     
+    # Send order confirmation email
+    try:
+        from email_notifications import send_order_confirmation
+        send_order_confirmation(user, order)
+    except Exception as e:
+        print(f"Email error: {e}")
+    
     # Build WhatsApp message with PAYMENT PROTECTION
     tier_badges = {'bronze': '[BRONZE]', 'silver': '[SILVER]', 'gold': '[GOLD]', 'platinum': '[PLATINUM VIP]'}
     tier_badge = tier_badges.get(user.tier, '[BRONZE]')
@@ -1818,6 +1882,35 @@ def newsletter_subscribe():
     newsletter = Newsletter(email=email)
     db.session.add(newsletter)
     db.session.commit()
+    
+    # Send confirmation email
+    try:
+        from email_notifications import send_email
+        html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; text-align: center;">
+                <h1 style="color: white; margin: 0;">💌 Newsletter Subscription Confirmed!</h1>
+            </div>
+            <div style="padding: 30px; background: #f9f9f9;">
+                <p>Thank you for subscribing to Wegatsaucee Fashion Hub newsletter!</p>
+                <p>You'll now receive:</p>
+                <ul>
+                    <li>✨ Exclusive deals and discounts</li>
+                    <li>🆕 New product launches</li>
+                    <li>👗 Fashion tips and trends</li>
+                    <li>🎁 Special member-only offers</li>
+                </ul>
+                <p>Stay stylish!</p>
+                <p style="margin-top: 30px;">Best regards,<br><strong>Wegatsaucee Fashion Hub</strong></p>
+            </div>
+        </body>
+        </html>
+        """
+        send_email(email, "Welcome to Wegatsaucee Newsletter! 💌", html)
+    except Exception as e:
+        print(f"Newsletter email error: {e}")
+    
     return jsonify({'success': True, 'message': 'Subscribed successfully!'})
 
 @app.route('/about')
