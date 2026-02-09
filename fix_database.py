@@ -1,91 +1,78 @@
 #!/usr/bin/env python3
 """
-Database Migration Script for PythonAnywhere
-Fixes missing columns and schema issues
+Database migration script to add missing tables and columns
+Run this on PythonAnywhere to fix database errors
 """
 
 import sqlite3
 import os
-import sys
 
-def fix_database():
-    # Get the database path
-    db_path = os.path.join(os.path.dirname(__file__), 'ecommerce.db')
+# Detect environment
+if os.path.exists('/home/emonigatsaucee'):
+    db_path = '/home/emonigatsaucee/wegatsauceefashionhub/instance/wegatsaucee.db'
+else:
+    db_path = 'instance/wegatsaucee.db'
+
+print(f"Connecting to database: {db_path}")
+
+try:
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
     
-    print(f"Fixing database at: {db_path}")
-    
-    if not os.path.exists(db_path):
-        print(f"ERROR: Database file not found at {db_path}")
-        return False
-    
+    # 1. Add likes_count column to product table
+    print("\n1. Adding likes_count column to product table...")
     try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        
-        # Check and add missing columns to Product table
-        print("\n1. Checking Product table...")
-        cursor.execute("PRAGMA table_info(product)")
-        columns = [col[1] for col in cursor.fetchall()]
-        
-        if 'flash_sale_price' not in columns:
-            print("   Adding flash_sale_price column...")
-            cursor.execute("ALTER TABLE product ADD COLUMN flash_sale_price REAL")
-        
-        if 'flash_sale_end' not in columns:
-            print("   Adding flash_sale_end column...")
-            cursor.execute("ALTER TABLE product ADD COLUMN flash_sale_end DATETIME")
-        
-        # Check and add missing columns to Order table
-        print("\n2. Checking Order table...")
-        cursor.execute("PRAGMA table_info('order')")
-        columns = [col[1] for col in cursor.fetchall()]
-        
-        if 'coupon_code' not in columns:
-            print("   Adding coupon_code column...")
-            cursor.execute("ALTER TABLE 'order' ADD COLUMN coupon_code VARCHAR(50)")
-        
-        if 'discount_amount' not in columns:
-            print("   Adding discount_amount column...")
-            cursor.execute("ALTER TABLE 'order' ADD COLUMN discount_amount REAL DEFAULT 0")
-        
-        conn.commit()
-        print("\n✓ Database migration completed successfully!")
-        
-        # Verify changes
-        print("\n3. Verifying Product table columns:")
-        cursor.execute("PRAGMA table_info(product)")
-        for col in cursor.fetchall():
-            print(f"   - {col[1]} ({col[2]})")
-        
-        print("\n4. Verifying Order table columns:")
-        cursor.execute("PRAGMA table_info('order')")
-        for col in cursor.fetchall():
-            print(f"   - {col[1]} ({col[2]})")
-        
+        cursor.execute("ALTER TABLE product ADD COLUMN likes_count INTEGER DEFAULT 0")
+        print("✓ likes_count column added successfully")
+    except sqlite3.OperationalError as e:
+        if "duplicate column" in str(e).lower():
+            print("✓ likes_count column already exists")
+        else:
+            print(f"✗ Error adding likes_count: {e}")
+    
+    # 2. Create newsletter table
+    print("\n2. Creating newsletter table...")
+    try:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS newsletter (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email VARCHAR(120) UNIQUE NOT NULL,
+                subscribed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                active BOOLEAN DEFAULT 1
+            )
+        """)
+        print("✓ Newsletter table created successfully")
+    except sqlite3.OperationalError as e:
+        print(f"✗ Error creating newsletter table: {e}")
+    
+    # 3. Initialize likes_count for existing products
+    print("\n3. Initializing likes_count for existing products...")
+    cursor.execute("UPDATE product SET likes_count = 0 WHERE likes_count IS NULL")
+    updated = cursor.rowcount
+    print(f"✓ Updated {updated} products")
+    
+    # Commit changes
+    conn.commit()
+    print("\n✅ Database migration completed successfully!")
+    
+    # Show summary
+    print("\n📊 Database Summary:")
+    cursor.execute("SELECT COUNT(*) FROM product")
+    print(f"   Products: {cursor.fetchone()[0]}")
+    
+    cursor.execute("SELECT COUNT(*) FROM newsletter")
+    print(f"   Newsletter subscribers: {cursor.fetchone()[0]}")
+    
+    cursor.execute("SELECT COUNT(*) FROM product WHERE likes_count > 0")
+    print(f"   Products with likes: {cursor.fetchone()[0]}")
+    
+except Exception as e:
+    print(f"\n❌ Migration failed: {e}")
+    import traceback
+    traceback.print_exc()
+finally:
+    if conn:
         conn.close()
-        return True
-        
-    except Exception as e:
-        print(f"\nERROR: {str(e)}")
-        return False
+        print("\n✓ Database connection closed")
 
-if __name__ == "__main__":
-    print("=" * 60)
-    print("DATABASE MIGRATION SCRIPT")
-    print("=" * 60)
-    
-    success = fix_database()
-    
-    if success:
-        print("\n" + "=" * 60)
-        print("MIGRATION SUCCESSFUL!")
-        print("=" * 60)
-        print("\nNext steps:")
-        print("1. Reload your web app in PythonAnywhere")
-        print("2. Test the homepage and admin panel")
-        sys.exit(0)
-    else:
-        print("\n" + "=" * 60)
-        print("MIGRATION FAILED!")
-        print("=" * 60)
-        sys.exit(1)
+print("\n🎉 Done! Reload your web app on PythonAnywhere.")
