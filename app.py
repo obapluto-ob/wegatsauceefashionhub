@@ -173,7 +173,7 @@ class Newsletter(db.Model):
 def check_pending_payment():
     """Redirect logged-in users with pending orders to payment confirmation page"""
     # Skip for certain routes
-    excluded_routes = ['payment_pending', 'api_order_status', 'logout', 'static', 'admin_login', 'admin_logout']
+    excluded_routes = ['payment_pending', 'api_order_status', 'logout', 'static', 'admin_login', 'admin_logout', 'confirm_delivery', 'track_order']
     if any(route in request.endpoint for route in excluded_routes if request.endpoint):
         return
     
