@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.name }} - User Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <!-- Admin Header -->
+        <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">👤 User Details</h1>
+                <div class="flex gap-4">
+                    <a href="/admin/users" class="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100">← Back to Users</a>
+                    <a href="/admin" class="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100">Dashboard</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- User Info Card -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="text-center mb-6">
+                            <div class="w-24 h-24 bg-gradient-to-r 
+                                {% if user.tier == 'platinum' %}from-purple-600 to-pink-600
+                                {% elif user.tier == 'gold' %}from-yellow-500 to-orange-500
+                                {% elif user.tier == 'silver' %}from-gray-400 to-gray-600
+                                {% else %}from-orange-500 to-red-500{% endif %}
+                                rounded-full mx-auto flex items-center justify-center text-white text-3xl font-bold">
+                                {{ user.name[0].upper() }}
+                            </div>
+                            <h2 class="text-2xl font-bold mt-4">{{ user.name }}</h2>
+                            <span class="px-3 py-1 rounded-full text-sm font-semibold
+                                {% if user.tier == 'platinum' %}bg-purple-100 text-purple-800
+                                {% elif user.tier == 'gold' %}bg-yellow-100 text-yellow-800
+                                {% elif user.tier == 'silver' %}bg-gray-100 text-gray-800
+                                {% else %}bg-orange-100 text-orange-800{% endif %}">
+                                {{ user.tier.upper() }} MEMBER
+                            </span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Email</p>
+                                <p class="font-semibold">{{ user.email }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Phone</p>
+                                <p class="font-semibold">{{ user.phone }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">User ID</p>
+                                <p class="font-semibold">#{{ user.id }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Member Since</p>
+                                <p class="font-semibold">{{ user.created_at.strftime('%B %d, %Y') }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Loyalty Points</p>
+                                <p class="text-2xl font-bold text-purple-600">{{ user.points }}</p>
+                            </div>
+                            {% if user.admin_rating > 0 %}
+                            <div>
+                                <p class="text-sm text-gray-600">Admin Rating</p>
+                                <div class="flex items-center">
+                                    {% for i in range(user.admin_rating) %}
+                                    <span class="text-yellow-500">⭐</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Contact Actions -->
+                        <div class="mt-6 space-y-2">
+                            <a href="mailto:{{ user.email }}" class="block w-full bg-blue-500 text-white text-center py-2 rounded-lg hover:bg-blue-600">
+                                📧 Send Email
+                            </a>
+                            <a href="https://wa.me/{{ user.phone.replace('+', '').replace(' ', '') }}" target="_blank" class="block w-full bg-green-500 text-white text-center py-2 rounded-lg hover:bg-green-600">
+                                💬 WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats & Orders -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white rounded-lg shadow p-4">
+                            <p class="text-gray-600 text-sm">Total Orders</p>
+                            <p class="text-3xl font-bold text-blue-600">{{ orders|length }}</p>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-4">
+                            <p class="text-gray-600 text-sm">Total Spent</p>
+                            <p class="text-3xl font-bold text-green-600">KSh {{ "{:,.0f}".format(total_spent) }}</p>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-4">
+                            <p class="text-gray-600 text-sm">Pending Orders</p>
+                            <p class="text-3xl font-bold text-orange-600">{{ orders|selectattr('status', 'equalto', 'pending')|list|length }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Order History -->
+                    <div class="bg-white rounded-lg shadow">
+                        <div class="p-4 bg-gray-50 border-b">
+                            <h3 class="text-xl font-bold">Order History</h3>
+                        </div>
+                        <div class="p-4">
+                            {% if orders %}
+                                <div class="space-y-4">
+                                    {% for order in orders %}
+                                    <div class="border rounded-lg p-4 hover:shadow-md transition-all">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <p class="font-bold text-lg">Order #{{ order.id }}</p>
+                                                <p class="text-sm text-gray-600">{{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                            </div>
+                                            <span class="px-3 py-1 rounded-full text-sm font-semibold
+                                                {% if order.status == 'delivered' %}bg-green-100 text-green-800
+                                                {% elif order.status == 'shipped' %}bg-blue-100 text-blue-800
+                                                {% elif order.status == 'processing' %}bg-yellow-100 text-yellow-800
+                                                {% elif order.status == 'paid' %}bg-purple-100 text-purple-800
+                                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                {{ order.status.upper() }}
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 gap-4 text-sm mb-3">
+                                            <div>
+                                                <p class="text-gray-600">Total Amount</p>
+                                                <p class="font-bold text-green-600">KSh {{ "{:,.0f}".format(order.total) }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-gray-600">Payment Method</p>
+                                                <p class="font-semibold">{{ order.payment_method.upper() }}</p>
+                                            </div>
+                                            {% if order.shipping_fee %}
+                                            <div>
+                                                <p class="text-gray-600">Shipping Fee</p>
+                                                <p class="font-semibold">KSh {{ "{:,.0f}".format(order.shipping_fee) }}</p>
+                                            </div>
+                                            {% endif %}
+                                            {% if order.expected_delivery %}
+                                            <div>
+                                                <p class="text-gray-600">Expected Delivery</p>
+                                                <p class="font-semibold">{{ order.expected_delivery.strftime('%B %d, %Y') }}</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Order Items -->
+                                        {% set items = order.items|from_json %}
+                                        {% if items %}
+                                        <div class="border-t pt-3">
+                                            <p class="text-sm font-semibold text-gray-600 mb-2">Items:</p>
+                                            <div class="space-y-2">
+                                                {% for item in items %}
+                                                <div class="flex items-center gap-3 text-sm">
+                                                    {% if item.image_url %}
+                                                    <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-12 h-12 object-cover rounded">
+                                                    {% endif %}
+                                                    <div class="flex-1">
+                                                        <p class="font-semibold">{{ item.name }}</p>
+                                                        <p class="text-gray-600">Qty: {{ item.quantity }} × KSh {{ "{:,.0f}".format(item.price) }}</p>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+
+                                        <div class="mt-3 flex gap-2">
+                                            <a href="/admin/track_order/{{ order.id }}" class="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600">
+                                                Track Order
+                                            </a>
+                                            {% if order.status == 'pending' %}
+                                            <form method="POST" action="/admin/update_order_status" class="inline">
+                                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                                <input type="hidden" name="status" value="paid">
+                                                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600">
+                                                    Mark as Paid
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-8 text-gray-500">
+                                    <p>No orders yet</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

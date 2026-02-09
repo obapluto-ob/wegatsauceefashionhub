@@ -39,15 +39,25 @@
             <div class="flex items-center gap-4 mb-4">
                 <div class="text-4xl font-bold text-purple-600">{{ currency }} {{ "%.2f"|format(product.display_price) }}</div>
                 {% if in_wishlist %}
-                <button onclick="removeFromWishlist({{ product.id }})" class="text-red-500 hover:text-red-600">
+                <button onclick="removeFromWishlist({{ product.id }})" id="wishlist-btn" class="text-red-500 hover:text-red-600 relative">
                     <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    <span id="likes-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ product.likes_count or 0 }}</span>
                 </button>
                 {% else %}
-                <button onclick="addToWishlist({{ product.id }})" class="text-gray-400 hover:text-red-500">
+                <button onclick="addToWishlist({{ product.id }})" id="wishlist-btn" class="text-gray-400 hover:text-red-500 relative">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                    <span id="likes-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ product.likes_count or 0 }}</span>
                 </button>
                 {% endif %}
             </div>
+
+            <!-- Purchase Count Badge -->
+            {% if product.purchase_count > 0 %}
+            <div class="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-4 py-2 mb-4">
+                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                <span class="text-green-800 font-semibold text-sm">{{ product.purchase_count }} {{ 'person has' if product.purchase_count == 1 else 'people have' }} bought this</span>
+            </div>
+            {% endif %}
 
             <p class="text-gray-700 mb-6">{{ product.description }}</p>
 
@@ -226,13 +236,45 @@ function changeQty(change) {
 
 function addToCart() {
     const qty = parseInt(document.getElementById('qty').value);
+    
+    // Validate size selection if product has sizes
+    {% if product.sizes and product.sizes != '[]' %}
+    {% set sizes = product.sizes | from_json %}
+    {% if sizes %}
+    if (!selectedSize) {
+        alert('Please select a size');
+        return;
+    }
+    {% endif %}
+    {% endif %}
+    
+    // Validate color selection if product has colors
+    {% if product.colors and product.colors != '[]' %}
+    {% set colors = product.colors | from_json %}
+    {% if colors %}
+    if (!selectedColor) {
+        alert('Please select a color');
+        return;
+    }
+    {% endif %}
+    {% endif %}
+    
     fetch('/add_to_cart', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({product_id: {{ product.id }}, quantity: qty})
+        body: JSON.stringify({
+            product_id: {{ product.id }}, 
+            quantity: qty,
+            size: selectedSize,
+            color: selectedColor
+        })
     })
     .then(r => r.json())
     .then(data => {
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
         if (data.success) {
             let cart = JSON.parse(localStorage.getItem('cart') || '[]');
             const existing = cart.find(item => item.id == {{ product.id }} && item.size == selectedSize && item.color == selectedColor);
@@ -261,7 +303,11 @@ function addToWishlist(id) {
     fetch(`/wishlist/add/${id}`, {method: 'POST'})
     .then(r => r.json())
     .then(data => {
-        if (data.success) location.reload();
+        if (data.success) {
+            // Update likes count
+            document.getElementById('likes-count').textContent = data.likes_count || 0;
+            location.reload();
+        }
     });
 }
 
@@ -269,7 +315,11 @@ function removeFromWishlist(id) {
     fetch(`/wishlist/remove/${id}`, {method: 'POST'})
     .then(r => r.json())
     .then(data => {
-        if (data.success) location.reload();
+        if (data.success) {
+            // Update likes count
+            document.getElementById('likes-count').textContent = data.likes_count || 0;
+            location.reload();
+        }
     });
 }
 </script>

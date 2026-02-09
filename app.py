@@ -82,6 +82,7 @@ class Product(db.Model):
     is_trending = db.Column(db.Boolean, default=False)  # Mark as trending
     flash_sale_price = db.Column(db.Float)  # Flash sale price
     flash_sale_end = db.Column(db.DateTime)  # Flash sale end time
+    likes_count = db.Column(db.Integer, default=0)  # Number of likes
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Order(db.Model):
@@ -244,9 +245,9 @@ def home():
     random.shuffle(trending_products)
     trending_products = trending_products[:8]  # Take first 8 after shuffle
     
-    # Mark hot products (top bought)
+    # Calculate real purchase count for each product
     for product in trending_products:
-        # Count how many times this product was ordered
+        # Count how many times this product was ordered (paid orders only)
         order_count = 0
         orders = Order.query.filter(Order.status.in_(['paid', 'processing', 'shipped', 'delivered'])).all()
         for order in orders:
@@ -258,9 +259,7 @@ def home():
             except:
                 pass
         
-        # Mark as hot if ordered 5+ times
-        product.is_hot = order_count >= 5
-        product.order_count = order_count
+        product.purchase_count = order_count
     
     currency = get_user_currency()
     current_user = db.session.get(User, session['user_id']) if 'user_id' in session else None
@@ -335,6 +334,19 @@ def product_detail(id):
                 db.session.delete(old)
         db.session.commit()
     
+    # Calculate real purchase count
+    purchase_count = 0
+    orders = Order.query.filter(Order.status.in_(['paid', 'processing', 'shipped', 'delivered'])).all()
+    for order in orders:
+        try:
+            items = json.loads(order.items)
+            for item in items:
+                if item.get('id') == product.id:
+                    purchase_count += item.get('quantity', 1)
+        except:
+            pass
+    product.purchase_count = purchase_count
+    
     # Get related products (same category, different product)
     related_products = Product.query.filter(
         Product.category == product.category,
@@ -373,16 +385,36 @@ def cart():
 def add_to_cart():
     product_id = request.json.get('product_id')
     quantity = request.json.get('quantity', 1)
+    size = request.json.get('size')
+    color = request.json.get('color')
     
     product = db.session.get(Product, product_id)
     if not product:
         return jsonify({'error': 'Product not found'}), 404
     
+    # Check if product has sizes and size is required
+    if product.sizes:
+        try:
+            sizes_list = json.loads(product.sizes)
+            if sizes_list and not size:
+                return jsonify({'error': 'Please select a size'}), 400
+        except:
+            pass
+    
+    # Check if product has colors and color is required
+    if product.colors:
+        try:
+            colors_list = json.loads(product.colors)
+            if colors_list and not color:
+                return jsonify({'error': 'Please select a color'}), 400
+        except:
+            pass
+    
     cart = session.get('cart', [])
     
-    # Check if product already in cart
+    # Check if product with same size/color already in cart
     for item in cart:
-        if item['id'] == product_id:
+        if item['id'] == product_id and item.get('size') == size and item.get('color') == color:
             item['quantity'] += quantity
             break
     else:
@@ -400,6 +432,8 @@ def add_to_cart():
             'name': product.name,
             'price': product.price,
             'quantity': quantity,
+            'size': size,
+            'color': color,
             'image_url': image_url
         })
     
@@ -1207,6 +1241,32 @@ def track_order(order_id):
     # Public tracking - anyone can view with order ID (like FedEx)
     return render_template('track_order.html', order=order)
 
+@app.route('/admin/users')
+def admin_users():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    users = User.query.order_by(User.created_at.desc()).all()
+    
+    # Calculate stats for each user
+    for user in users:
+        user.total_orders = Order.query.filter_by(user_id=user.id).count()
+        user.total_spent = db.session.query(db.func.sum(Order.total)).filter_by(user_id=user.id).scalar() or 0
+        user.pending_orders = Order.query.filter_by(user_id=user.id, status='pending').count()
+    
+    return render_template('admin_users.html', users=users)
+
+@app.route('/admin/user/<int:user_id>')
+def admin_user_detail(user_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    user = User.query.get_or_404(user_id)
+    orders = Order.query.filter_by(user_id=user_id).order_by(Order.created_at.desc()).all()
+    total_spent = sum(order.total for order in orders)
+    
+    return render_template('admin_user_detail.html', user=user, orders=orders, total_spent=total_spent)
+
 @app.route('/admin/orders')
 def admin_orders():
     if not session.get('admin_logged_in'):
@@ -1480,9 +1540,15 @@ def add_to_wishlist(product_id):
     
     wishlist_item = Wishlist(user_id=session['user_id'], product_id=product_id)
     db.session.add(wishlist_item)
+    
+    # Increment likes count
+    product = db.session.get(Product, product_id)
+    if product:
+        product.likes_count = (product.likes_count or 0) + 1
+    
     db.session.commit()
     
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'likes_count': product.likes_count if product else 0})
 
 @app.route('/wishlist/remove/<int:product_id>', methods=['POST'])
 def remove_from_wishlist(product_id):
@@ -1492,7 +1558,14 @@ def remove_from_wishlist(product_id):
     wishlist_item = Wishlist.query.filter_by(user_id=session['user_id'], product_id=product_id).first()
     if wishlist_item:
         db.session.delete(wishlist_item)
+        
+        # Decrement likes count
+        product = db.session.get(Product, product_id)
+        if product and product.likes_count > 0:
+            product.likes_count -= 1
+        
         db.session.commit()
+        return jsonify({'success': True, 'likes_count': product.likes_count if product else 0})
     
     return jsonify({'success': True})
 
