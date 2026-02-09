@@ -117,3 +117,39 @@ def send_tracking_update(user, order, tracking):
     </html>
     """
     return send_email(user.email, f"Order #{order.id} Update - {tracking.location} - Wegatsaucee", html)
+
+def send_delivery_confirmation_to_admin(user, order, confirmation):
+    """Send delivery confirmation notification to admin"""
+    admin_email = config('ADMIN_EMAIL', default='admin@wegatsaucee.com')
+    
+    rating_stars = '⭐' * confirmation.rating
+    photo_link = f"https://emonigatsaucee.pythonanywhere.com{confirmation.photo_url}" if confirmation.photo_url else "No photo uploaded"
+    
+    html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">✅ Delivery Confirmed by Customer</h1>
+        </div>
+        <div style="padding: 30px; background: #f9f9f9;">
+            <p>A customer has confirmed delivery for their order.</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <h2 style="color: #11998e;">Order #{order.id}</h2>
+                <p><strong>Customer:</strong> {user.name}</p>
+                <p><strong>Email:</strong> {user.email}</p>
+                <p><strong>Phone:</strong> {user.phone}</p>
+                <p><strong>Order Total:</strong> KSh {order.total:,.0f}</p>
+                <hr style="border: 1px solid #eee; margin: 15px 0;">
+                <p><strong>Rating:</strong> {rating_stars} ({confirmation.rating}/5)</p>
+                <p><strong>Feedback:</strong> {confirmation.feedback}</p>
+                <p><strong>Photo:</strong> <a href="{photo_link}">{photo_link}</a></p>
+            </div>
+            
+            <p>View order details: <a href="https://emonigatsaucee.pythonanywhere.com/admin/orders">Admin Dashboard</a></p>
+            <p style="margin-top: 30px;">Best regards,<br><strong>Wegatsaucee System</strong></p>
+        </div>
+    </body>
+    </html>
+    """
+    return send_email(admin_email, f"✅ Delivery Confirmed - Order #{order.id}", html)

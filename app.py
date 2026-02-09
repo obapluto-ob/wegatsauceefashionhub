@@ -1402,6 +1402,9 @@ def confirm_delivery(order_id):
     )
     db.session.add(confirmation)
     
+    # Update order status to delivered
+    order.status = 'delivered'
+    
     # Auto-create review from delivery confirmation
     try:
         items = json.loads(order.items)
@@ -1432,6 +1435,13 @@ def confirm_delivery(order_id):
     update_user_tier(user)
     
     db.session.commit()
+    
+    # Send email notification to admin
+    try:
+        from email_notifications import send_delivery_confirmation_to_admin
+        send_delivery_confirmation_to_admin(user, order, confirmation)
+    except Exception as e:
+        system_logger.log('ERROR', f'Admin delivery notification email failed for order #{order.id}: {e}', user_id=user.id)
     
     return redirect(url_for('track_order', order_id=order_id))
 
