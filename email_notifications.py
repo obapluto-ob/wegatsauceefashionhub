@@ -6,22 +6,35 @@ from decouple import config
 def send_email(to_email, subject, html_content):
     """Send HTML email using Gmail SMTP"""
     try:
+        from_email = config('EMAIL_USER')
+        password = config('EMAIL_PASSWORD')
+        host = config('EMAIL_HOST')
+        port = int(config('EMAIL_PORT'))
+        
+        print(f"[EMAIL DEBUG] Attempting to send to {to_email}")
+        print(f"[EMAIL DEBUG] From: {from_email}")
+        print(f"[EMAIL DEBUG] Host: {host}:{port}")
+        
         msg = MIMEMultipart('alternative')
-        msg['From'] = config('EMAIL_USER')
+        msg['From'] = from_email
         msg['To'] = to_email
         msg['Subject'] = subject
         
         html_part = MIMEText(html_content, 'html')
         msg.attach(html_part)
         
-        server = smtplib.SMTP(config('EMAIL_HOST'), int(config('EMAIL_PORT')))
+        server = smtplib.SMTP(host, port, timeout=10)
+        server.set_debuglevel(1)  # Enable debug output
         server.starttls()
-        server.login(config('EMAIL_USER'), config('EMAIL_PASSWORD'))
+        server.login(from_email, password)
         server.send_message(msg)
         server.quit()
+        print(f"[EMAIL DEBUG] Email sent successfully to {to_email}")
         return True
     except Exception as e:
-        print(f"Email error: {e}")
+        print(f"[EMAIL ERROR] Failed to send email to {to_email}: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def send_order_confirmation(user, order):

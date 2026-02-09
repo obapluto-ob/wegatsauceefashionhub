@@ -522,7 +522,7 @@ def register():
             """
             send_email(email, "Welcome to Wegatsaucee Fashion Hub!", welcome_html)
         except Exception as e:
-            print(f"Welcome email error: {e}")
+            system_logger.log('ERROR', f'Welcome email failed for {email}: {e}', ip=ip)
         
         # Record successful registration
         registration_attempts[ip].append(datetime.utcnow())
@@ -1240,7 +1240,7 @@ def admin_update_order_status():
                 from email_notifications import send_shipping_notification
                 send_shipping_notification(order.user, order)
             except Exception as e:
-                print(f"Email error: {e}")
+                system_logger.log('ERROR', f'Shipping notification email failed for order #{order.id}: {e}', user_id=order.user_id)
         
         db.session.commit()
     
@@ -1640,7 +1640,7 @@ def checkout():
         from email_notifications import send_order_confirmation
         send_order_confirmation(user, order)
     except Exception as e:
-        print(f"Email error: {e}")
+        system_logger.log('ERROR', f'Order confirmation email failed for order #{order.id}: {e}', user_id=user.id)
     
     # Build WhatsApp message with PAYMENT PROTECTION
     tier_badges = {'bronze': '[BRONZE]', 'silver': '[SILVER]', 'gold': '[GOLD]', 'platinum': '[PLATINUM VIP]'}
@@ -1909,7 +1909,7 @@ def newsletter_subscribe():
         """
         send_email(email, "Welcome to Wegatsaucee Newsletter! 💌", html)
     except Exception as e:
-        print(f"Newsletter email error: {e}")
+        system_logger.log('ERROR', f'Newsletter email failed: {e}', ip=request.environ.get('REMOTE_ADDR'))
     
     return jsonify({'success': True, 'message': 'Subscribed successfully!'})
 
