@@ -120,7 +120,7 @@ def send_tracking_update(user, order, tracking):
 
 def send_delivery_confirmation_to_admin(user, order, confirmation):
     """Send delivery confirmation notification to admin"""
-    admin_email = config('ADMIN_EMAIL', default='admin@wegatsaucee.com')
+    admin_email = config('ADMIN_EMAIL', default='michealbyers750@gmail.com')
     
     rating_stars = '⭐' * confirmation.rating
     photo_link = f"https://emonigatsaucee.pythonanywhere.com{confirmation.photo_url}" if confirmation.photo_url else "No photo uploaded"
