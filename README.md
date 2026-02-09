@@ -66,15 +66,25 @@ A modern Flask e-commerce website for fashion retail with international payment 
 
 ### PythonAnywhere (Recommended)
 
-**Quick Fix for Current Deployment Issues:**
-
-If you're seeing database errors, run this one command:
+**🚨 QUICK FIX for "unable to open database file" error:**
 
 ```bash
-cd ~/wegatsauceefashionhub && source ~/.virtualenvs/myenv/bin/activate && python quick_fix.py
+cd ~/wegatsauceefashionhub
+source ~/.virtualenvs/myenv/bin/activate
+python pythonanywhere_fix.py
 ```
 
-Then reload your web app in the PythonAnywhere dashboard.
+Then reload your web app in PythonAnywhere dashboard.
+
+**OR use one-liner:**
+
+```bash
+bash fix_pa.sh
+```
+
+See [PYTHONANYWHERE_DATABASE_FIX.md](PYTHONANYWHERE_DATABASE_FIX.md) for detailed troubleshooting.
+
+---
 
 **Fresh Deployment:**
 

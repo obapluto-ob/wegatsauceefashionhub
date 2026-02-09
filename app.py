@@ -19,12 +19,17 @@ from security import (
 app = Flask(__name__)
 app.config['SECRET_KEY'] = config('SECRET_KEY', default='dev-key-change-in-production')
 
-# Fix database path for both local and production
-db_uri = config('SQLALCHEMY_DATABASE_URI', default='sqlite:///instance/wegatsaucee.db')
-if not db_uri.startswith('sqlite:////'):  # Not absolute path
-    if 'sqlite:///' in db_uri and 'instance/' not in db_uri:
-        db_uri = db_uri.replace('sqlite:///', 'sqlite:///instance/')
-app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+# Database path - works for both local and PythonAnywhere
+import os
+if os.path.exists('/home/emonigatsaucee'):  # PythonAnywhere
+    db_path = '/home/emonigatsaucee/wegatsauceefashionhub/instance/wegatsaucee.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+else:  # Local development
+    db_uri = config('SQLALCHEMY_DATABASE_URI', default='sqlite:///instance/wegatsaucee.db')
+    if not db_uri.startswith('sqlite:////'):  # Not absolute path
+        if 'sqlite:///' in db_uri and 'instance/' not in db_uri:
+            db_uri = db_uri.replace('sqlite:///', 'sqlite:///instance/')
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'

@@ -1,110 +1,183 @@
-# PythonAnywhere Database Fix Guide
+# 🚨 PYTHONANYWHERE DATABASE FIX
 
-## Current Issues
-Your PythonAnywhere deployment has these errors:
-1. ❌ Missing database columns (flash_sale_price, coupon_code, etc.)
-2. ❌ Unable to open database file
-3. ❌ Missing environment variables
+## Error: "unable to open database file"
 
-## Quick Fix (Run on PythonAnywhere)
+This error occurs because the database path is incorrect on PythonAnywhere.
 
-### Step 1: Open Bash Console
-Go to PythonAnywhere → Consoles → Start a new Bash console
+## ⚡ QUICK FIX (Run on PythonAnywhere Console)
 
-### Step 2: Navigate to Your Project
+```bash
+cd ~/wegatsauceefashionhub
+source ~/.virtualenvs/myenv/bin/activate
+python pythonanywhere_fix.py
+```
+
+Then **reload your web app** in the PythonAnywhere Web tab.
+
+---
+
+## 📋 MANUAL FIX (If script doesn't work)
+
+### Step 1: Open PythonAnywhere Bash Console
+
+Go to: https://www.pythonanywhere.com/user/emonigatsaucee/consoles/
+
+### Step 2: Navigate to Project
+
 ```bash
 cd ~/wegatsauceefashionhub
 ```
 
 ### Step 3: Activate Virtual Environment
+
 ```bash
 source ~/.virtualenvs/myenv/bin/activate
 ```
 
-### Step 4: Create .env File
+### Step 4: Create Instance Directory
+
 ```bash
-cat > .env << 'EOF'
-SECRET_KEY=your-secret-key-change-this
-ADMIN_USER=admin
-ADMIN_PASS=admin123
-DATABASE_URL=sqlite:///ecommerce.db
+mkdir -p instance
+chmod 755 instance
+```
+
+### Step 5: Initialize Database
+
+```bash
+python3 << 'EOF'
+from app import app, db, Product
+import os
+
+with app.app_context():
+    # Create all tables
+    db.create_all()
+    print("✓ Database created")
+    
+    # Add sample products if none exist
+    if Product.query.count() == 0:
+        products = [
+            Product(name='Elegant Dress', price=2500, description='Beautiful floral dress', 
+                   category='dresses', gender='women', stock=50, is_trending=True),
+            Product(name='Chiffon Blouse', price=1800, description='Light chiffon top', 
+                   category='tops', gender='women', stock=30, is_trending=True),
+            Product(name='Business Suit', price=5500, description='Professional business suit', 
+                   category='suits', gender='men', stock=20, is_trending=True),
+            Product(name='Leather Shoes', price=3200, description='Comfortable leather shoes', 
+                   category='shoes', gender='unisex', stock=25, is_trending=True),
+            Product(name='Designer Handbag', price=4500, description='Premium leather handbag', 
+                   category='accessories', gender='women', stock=15, is_trending=True),
+            Product(name='Casual Shirt', price=1200, description='Cotton casual shirt', 
+                   category='shirts', gender='men', stock=40, is_trending=True)
+        ]
+        for p in products:
+            db.session.add(p)
+        db.session.commit()
+        print(f"✓ Added {len(products)} products")
+    
+    print("✅ Setup complete!")
 EOF
 ```
 
-### Step 5: Run Database Migration
-```bash
-python fix_database.py
-```
+### Step 6: Set Permissions
 
-### Step 6: Fix Database Permissions
 ```bash
-chmod 664 ecommerce.db
-chmod 775 .
+chmod 644 instance/wegatsaucee.db
 ```
 
 ### Step 7: Reload Web App
-Go to PythonAnywhere → Web → Click "Reload" button
 
-## Alternative: Complete Reset
+1. Go to: https://www.pythonanywhere.com/user/emonigatsaucee/webapps/
+2. Click the **Reload** button
+3. Visit your site
 
-If the above doesn't work, do a complete database reset:
+---
+
+## 🔍 VERIFY FIX
+
+After reloading, check the error log:
+- Go to Web tab
+- Click on "Error log" link
+- Should see no more "unable to open database file" errors
+
+---
+
+## 🛠️ ALTERNATIVE: Update WSGI File
+
+If the above doesn't work, update your WSGI file:
+
+1. Go to Web tab
+2. Click on WSGI configuration file link
+3. Make sure it has:
+
+```python
+import sys
+import os
+
+# Add project directory
+project_home = '/home/emonigatsaucee/wegatsauceefashionhub'
+if project_home not in sys.path:
+    sys.path.insert(0, project_home)
+
+# Set working directory
+os.chdir(project_home)
+
+# Import Flask app
+from app import app as application
+```
+
+4. Save and reload
+
+---
+
+## 📞 STILL NOT WORKING?
+
+### Check Database Path
 
 ```bash
 cd ~/wegatsauceefashionhub
-source ~/.virtualenvs/myenv/bin/activate
-
-# Backup old database
-mv ecommerce.db ecommerce.db.backup
-
-# Create fresh database
-python << 'EOF'
-from app import app, db
-with app.app_context():
-    db.create_all()
-    print("Database created successfully!")
-EOF
-
-# Run the quick fix script
-python quick_fix.py
+python3 -c "from app import app; print(app.config['SQLALCHEMY_DATABASE_URI'])"
 ```
 
-## Verify It's Working
+Should output: `sqlite:////home/emonigatsaucee/wegatsauceefashionhub/instance/wegatsaucee.db`
 
-1. Visit your site homepage
-2. Try logging in as admin (admin/admin123)
-3. Check if products load correctly
+### Check File Exists
 
-## Common Issues & Solutions
-
-### Issue: "unable to open database file"
-**Solution:**
 ```bash
-cd ~/wegatsauceefashionhub
-chmod 664 ecommerce.db
-chmod 775 .
+ls -la ~/wegatsauceefashionhub/instance/
 ```
 
-### Issue: "ADMIN_USER not found"
-**Solution:**
+Should show `wegatsaucee.db` file.
+
+### Check Permissions
+
 ```bash
-cd ~/wegatsauceefashionhub
-echo "ADMIN_USER=admin" >> .env
-echo "ADMIN_PASS=admin123" >> .env
+ls -la ~/wegatsauceefashionhub/instance/wegatsaucee.db
 ```
 
-### Issue: "no such column"
-**Solution:**
-```bash
-cd ~/wegatsauceefashionhub
-python fix_database.py
-```
+Should show: `-rw-r--r--` (644 permissions)
 
-## Need More Help?
+---
 
-If you're still having issues:
-1. Check error logs: PythonAnywhere → Web → Error log
-2. Verify file permissions: `ls -la ~/wegatsauceefashionhub/`
-3. Check database exists: `ls -la ~/wegatsauceefashionhub/*.db`
+## 💡 PREVENTION
 
-## Contact
-For urgent issues, check the PythonAnywhere forums or contact support.
+To prevent this in future:
+
+1. Always use absolute paths on PythonAnywhere
+2. Ensure instance directory exists before deployment
+3. Set proper file permissions (755 for directories, 644 for files)
+4. Test database connection after each deployment
+
+---
+
+## ✅ SUCCESS INDICATORS
+
+Your site is working when:
+- ✓ Homepage loads without errors
+- ✓ Products are visible
+- ✓ No database errors in error log
+- ✓ Can register/login users
+- ✓ Admin panel accessible
+
+---
+
+**Need more help?** Check the error log for specific error messages.
