@@ -1811,12 +1811,13 @@ def checkout():
     message += f"\nSubtotal: KSh {subtotal:,.0f}\n"
     if discount_amount > 0:
         message += f"Discount ({coupon_code}): -KSh {discount_amount:,.0f}\n"
+        message += f"After Discount: KSh {subtotal_after_discount:,.0f}\n"
     if handling_fee > 0:
-        message += f"Processing: KSh {handling_fee:,.0f}\n"
+        message += f"Processing Fee: KSh {handling_fee:,.0f}\n"
     message += f"Shipping: KSh {shipping_fee:,.0f}"
     if shipping_fee == 0:
         message += " (FREE - Tier Benefit)"
-    message += f"\nService Fee: KSh {commission:,.0f}\n"
+    message += f"\nPlatform Fee (8%): KSh {commission:,.0f}\n"
     message += f"*TOTAL: KSh {total:,.0f}*\n\n"
     message += f"Expected Delivery: {expected_delivery.strftime('%B %d, %Y')}\n\n"
     message += "Thank you for your order!"
