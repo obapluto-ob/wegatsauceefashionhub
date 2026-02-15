@@ -1702,10 +1702,13 @@ def checkout():
     # Calculate totals
     subtotal = sum(item['price'] * item['quantity'] for item in cart)
     
-    # Apply discount
+    # Smart commission (8% on ORIGINAL price - you still profit on coupons)
+    commission = subtotal * 0.08
+    
+    # Apply discount AFTER calculating commission
     subtotal_after_discount = subtotal - discount_amount
     
-    # Tiered shipping based on order value
+    # Smart tiered shipping based on order value
     if subtotal_after_discount < 2000:
         shipping_fee = 300
     elif subtotal_after_discount < 5000:
@@ -1727,9 +1730,12 @@ def checkout():
         if free_shipping_used == 0:
             shipping_fee = 0
     
-    # Platform commission (10%)
-    commission = subtotal_after_discount * 0.10
-    total = subtotal_after_discount + shipping_fee + commission
+    # Tiny handling fee only for big discounts (customers barely notice)
+    handling_fee = 0
+    if discount_amount > 500:  # Only if discount > KSh 500
+        handling_fee = min(discount_amount * 0.05, 100)  # Just 5%, max KSh 100
+    
+    total = subtotal_after_discount + shipping_fee + commission + handling_fee
     
     # Expected delivery (7-14 days from Tanzania to Kenya)
     from datetime import timedelta
@@ -1805,10 +1811,12 @@ def checkout():
     message += f"\nSubtotal: KSh {subtotal:,.0f}\n"
     if discount_amount > 0:
         message += f"Discount ({coupon_code}): -KSh {discount_amount:,.0f}\n"
+    if handling_fee > 0:
+        message += f"Processing: KSh {handling_fee:,.0f}\n"
     message += f"Shipping: KSh {shipping_fee:,.0f}"
     if shipping_fee == 0:
         message += " (FREE - Tier Benefit)"
-    message += f"\nTax: KSh {commission:,.0f}\n"
+    message += f"\nService Fee: KSh {commission:,.0f}\n"
     message += f"*TOTAL: KSh {total:,.0f}*\n\n"
     message += f"Expected Delivery: {expected_delivery.strftime('%B %d, %Y')}\n\n"
     message += "Thank you for your order!"
