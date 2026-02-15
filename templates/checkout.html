@@ -16,8 +16,8 @@
             <div class="flex gap-2">
                 <input type="text" id="coupon-code" placeholder="Enter coupon code" 
                        class="flex-1 border rounded-lg px-3 py-2 uppercase" maxlength="20">
-                <button onclick="applyCoupon()" 
-                        class="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 font-semibold">
+                <button id="apply-btn" onclick="applyCoupon()" 
+                        class="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 font-semibold min-w-[100px]">
                     Apply
                 </button>
             </div>
@@ -146,12 +146,17 @@ function loadCartItems() {
 async function applyCoupon() {
     const code = document.getElementById('coupon-code').value.trim().toUpperCase();
     const message = document.getElementById('coupon-message');
+    const btn = document.getElementById('apply-btn');
     
     if (!code) {
         message.textContent = 'Please enter a coupon code';
         message.className = 'text-sm mt-2 text-red-600';
         return;
     }
+    
+    // Show loading
+    btn.disabled = true;
+    btn.innerHTML = '<span class="animate-pulse">Checking...</span>';
     
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -175,13 +180,19 @@ async function applyCoupon() {
             
             message.textContent = data.message;
             message.className = 'text-sm mt-2 text-green-600 font-semibold';
+            btn.innerHTML = '✓ Applied';
+            btn.disabled = true;
         } else {
             message.textContent = data.message;
             message.className = 'text-sm mt-2 text-red-600';
+            btn.innerHTML = 'Apply';
+            btn.disabled = false;
         }
     } catch (error) {
         message.textContent = 'Error validating coupon';
         message.className = 'text-sm mt-2 text-red-600';
+        btn.innerHTML = 'Apply';
+        btn.disabled = false;
     }
 }
 
