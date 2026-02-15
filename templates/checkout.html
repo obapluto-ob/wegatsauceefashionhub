@@ -33,7 +33,19 @@
                 <span>Discount (<span id="discount-code"></span>):</span>
                 <span id="discount-amount">-KSh 0</span>
             </div>
-            <div class="flex justify-between text-xl font-bold">
+            <div class="flex justify-between text-gray-700">
+                <span>Shipping:</span>
+                <span id="shipping-amount">KSh 0</span>
+            </div>
+            <div id="handling-row" class="flex justify-between text-gray-600 text-sm hidden">
+                <span>Convenience Fee:</span>
+                <span id="handling-amount">KSh 0</span>
+            </div>
+            <div class="flex justify-between text-gray-600 text-sm">
+                <span>Service Charge (8%):</span>
+                <span id="commission-amount">KSh 0</span>
+            </div>
+            <div class="border-t pt-2 flex justify-between text-xl font-bold">
                 <span>Total:</span>
                 <span id="total-amount">KSh 0</span>
             </div>
@@ -138,8 +150,37 @@ function loadCartItems() {
         `;
     });
     
+    // Calculate all fees
+    const subtotalAfterDiscount = subtotal - discountAmount;
+    
+    // Shipping
+    let shipping = 300;
+    if (subtotalAfterDiscount >= 5000) shipping = 500;
+    else if (subtotalAfterDiscount >= 2000) shipping = 400;
+    
+    // Commission (8% of original)
+    const commission = Math.round(subtotal * 0.08);
+    
+    // Handling fee
+    let handlingFee = 0;
+    if (discountAmount > 500) {
+        handlingFee = Math.min(Math.round(discountAmount * 0.05), 100);
+    }
+    
+    const total = subtotalAfterDiscount + shipping + commission + handlingFee;
+    
+    // Update display
     subtotalSpan.textContent = `KSh ${subtotal.toLocaleString()}`;
-    const total = subtotal - discountAmount;
+    document.getElementById('shipping-amount').textContent = `KSh ${shipping.toLocaleString()}`;
+    document.getElementById('commission-amount').textContent = `KSh ${commission.toLocaleString()}`;
+    
+    if (handlingFee > 0) {
+        document.getElementById('handling-amount').textContent = `KSh ${handlingFee.toLocaleString()}`;
+        document.getElementById('handling-row').classList.remove('hidden');
+    } else {
+        document.getElementById('handling-row').classList.add('hidden');
+    }
+    
     totalAmountSpan.textContent = `KSh ${total.toLocaleString()}`;
 }
 
@@ -176,7 +217,9 @@ async function applyCoupon() {
             document.getElementById('discount-code').textContent = data.code;
             document.getElementById('discount-amount').textContent = `-KSh ${discountAmount.toLocaleString()}`;
             document.getElementById('discount-row').classList.remove('hidden');
-            document.getElementById('total-amount').textContent = `KSh ${(subtotal - discountAmount).toLocaleString()}`;
+            
+            // Recalculate everything
+            loadCartItems();
             
             message.textContent = data.message;
             message.className = 'text-sm mt-2 text-green-600 font-semibold';

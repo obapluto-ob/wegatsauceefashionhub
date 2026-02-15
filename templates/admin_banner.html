@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <h2 class="text-3xl font-bold mb-6">Promo Banner Manager</h2>
+    
+    <!-- Create New Banner -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 class="text-xl font-bold mb-4">Create New Banner</h3>
+        <form method="POST">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Title</label>
+                    <input type="text" name="title" required placeholder="MEGA SALE" 
+                           class="w-full border rounded-lg px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Badge Text</label>
+                    <input type="text" name="badge_text" placeholder="SPECIAL OFFER" 
+                           class="w-full border rounded-lg px-3 py-2">
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Description</label>
+                <input type="text" name="description" placeholder="Use coupon codes at checkout for amazing discounts" 
+                       class="w-full border rounded-lg px-3 py-2">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Footer Text</label>
+                <input type="text" name="footer_text" placeholder="Enter code at checkout to save" 
+                       class="w-full border rounded-lg px-3 py-2">
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Start Color</label>
+                    <select name="color_start" class="w-full border rounded-lg px-3 py-2">
+                        <option value="yellow-400">Yellow</option>
+                        <option value="orange-500">Orange</option>
+                        <option value="red-500">Red</option>
+                        <option value="pink-500">Pink</option>
+                        <option value="purple-500">Purple</option>
+                        <option value="blue-500">Blue</option>
+                        <option value="green-500">Green</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Middle Color</label>
+                    <select name="color_mid" class="w-full border rounded-lg px-3 py-2">
+                        <option value="orange-500" selected>Orange</option>
+                        <option value="yellow-400">Yellow</option>
+                        <option value="red-500">Red</option>
+                        <option value="pink-500">Pink</option>
+                        <option value="purple-500">Purple</option>
+                        <option value="blue-500">Blue</option>
+                        <option value="green-500">Green</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">End Color</label>
+                    <select name="color_end" class="w-full border rounded-lg px-3 py-2">
+                        <option value="red-500" selected>Red</option>
+                        <option value="yellow-400">Yellow</option>
+                        <option value="orange-500">Orange</option>
+                        <option value="pink-500">Pink</option>
+                        <option value="purple-500">Purple</option>
+                        <option value="blue-500">Blue</option>
+                        <option value="green-500">Green</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                Create Banner
+            </button>
+        </form>
+    </div>
+    
+    <!-- Existing Banners -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-bold mb-4">Existing Banners</h3>
+        <div class="space-y-4">
+            {% for banner in banners %}
+            <div class="border rounded-lg p-4 {% if banner.active %}bg-green-50 border-green-500{% endif %}">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-bold text-lg">{{ banner.title }}</h4>
+                        <p class="text-gray-600 text-sm">{{ banner.description }}</p>
+                        <div class="flex gap-2 mt-2">
+                            <span class="text-xs bg-{{ banner.color_start }} text-white px-2 py-1 rounded">Start</span>
+                            <span class="text-xs bg-{{ banner.color_mid }} text-white px-2 py-1 rounded">Mid</span>
+                            <span class="text-xs bg-{{ banner.color_end }} text-white px-2 py-1 rounded">End</span>
+                        </div>
+                    </div>
+                    <form method="POST" action="/admin/toggle_banner/{{ banner.id }}">
+                        <button type="submit" class="{% if banner.active %}bg-red-500{% else %}bg-green-500{% endif %} text-white px-4 py-2 rounded hover:opacity-80">
+                            {% if banner.active %}Deactivate{% else %}Activate{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -168,6 +168,18 @@ class Newsletter(db.Model):
     subscribed_at = db.Column(db.DateTime, default=datetime.utcnow)
     active = db.Column(db.Boolean, default=True)
 
+class PromoBanner(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.String(500))
+    badge_text = db.Column(db.String(50), default='SPECIAL OFFER')
+    footer_text = db.Column(db.String(200), default='Enter code at checkout to save')
+    color_start = db.Column(db.String(50), default='yellow-400')
+    color_mid = db.Column(db.String(50), default='orange-500')
+    color_end = db.Column(db.String(50), default='red-500')
+    active = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 # Routes
 @app.before_request
 def check_pending_payment():
@@ -268,7 +280,28 @@ def home():
     for product in trending_products:
         product.display_price = convert_price(product.price, currency)
     
-    return render_template('index.html', products=trending_products, currency=currency, current_user=current_user)
+    # Get active promo banner with coupons
+    active_banner = PromoBanner.query.filter_by(active=True).first()
+    if active_banner:
+        active_coupons = Coupon.query.filter_by(active=True).order_by(Coupon.discount_percent.desc()).limit(3).all()
+        banner_data = {
+            'title': active_banner.title,
+            'description': active_banner.description,
+            'badge_text': active_banner.badge_text,
+            'footer_text': active_banner.footer_text,
+            'color_start': active_banner.color_start,
+            'color_mid': active_banner.color_mid,
+            'color_end': active_banner.color_end,
+            'coupons': [{
+                'code': c.code,
+                'discount_text': f"{int(c.discount_percent)}% OFF" if c.discount_percent else f"KSh {int(c.discount_amount)} OFF",
+                'min_purchase': c.min_purchase
+            } for c in active_coupons]
+        }
+    else:
+        banner_data = None
+    
+    return render_template('index.html', products=trending_products, currency=currency, current_user=current_user, active_banner=banner_data)
 
 @app.route('/products')
 def products():
@@ -1813,11 +1846,11 @@ def checkout():
         message += f"Discount ({coupon_code}): -KSh {discount_amount:,.0f}\n"
         message += f"After Discount: KSh {subtotal_after_discount:,.0f}\n"
     if handling_fee > 0:
-        message += f"Processing Fee: KSh {handling_fee:,.0f}\n"
+        message += f"Convenience Fee: KSh {handling_fee:,.0f}\n"
     message += f"Shipping: KSh {shipping_fee:,.0f}"
     if shipping_fee == 0:
         message += " (FREE - Tier Benefit)"
-    message += f"\nPlatform Fee (8%): KSh {commission:,.0f}\n"
+    message += f"\nService Charge: KSh {commission:,.0f}\n"
     message += f"*TOTAL: KSh {total:,.0f}*\n\n"
     message += f"Expected Delivery: {expected_delivery.strftime('%B %d, %Y')}\n\n"
     message += "Thank you for your order!"
@@ -1996,6 +2029,47 @@ def admin_toggle_coupon(id):
     db.session.commit()
     
     return redirect(url_for('admin_coupons'))
+
+@app.route('/admin/banner', methods=['GET', 'POST'])
+def admin_banner():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    if request.method == 'POST':
+        # Deactivate all banners
+        PromoBanner.query.update({'active': False})
+        
+        banner = PromoBanner(
+            title=request.form['title'],
+            description=request.form['description'],
+            badge_text=request.form.get('badge_text', 'SPECIAL OFFER'),
+            footer_text=request.form.get('footer_text', 'Enter code at checkout to save'),
+            color_start=request.form.get('color_start', 'yellow-400'),
+            color_mid=request.form.get('color_mid', 'orange-500'),
+            color_end=request.form.get('color_end', 'red-500'),
+            active=True
+        )
+        db.session.add(banner)
+        db.session.commit()
+        return redirect(url_for('admin_banner'))
+    
+    banners = PromoBanner.query.order_by(PromoBanner.created_at.desc()).all()
+    return render_template('admin_banner.html', banners=banners)
+
+@app.route('/admin/toggle_banner/<int:id>', methods=['POST'])
+def admin_toggle_banner(id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    # Deactivate all banners
+    PromoBanner.query.update({'active': False})
+    
+    # Activate selected banner
+    banner = PromoBanner.query.get_or_404(id)
+    banner.active = True
+    db.session.commit()
+    
+    return redirect(url_for('admin_banner'))
 
 @app.route('/newsletter/subscribe', methods=['POST'])
 def newsletter_subscribe():

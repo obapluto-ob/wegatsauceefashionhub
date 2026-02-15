@@ -19,6 +19,32 @@
     </div>
 </div>
 
+<!-- Coupon Promotion Banner (Admin Controlled) -->
+{% if active_banner %}
+<div class="bg-gradient-to-r from-{{ active_banner.color_start }} via-{{ active_banner.color_mid }} to-{{ active_banner.color_end }} rounded-xl p-8 mb-8 shadow-2xl relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px);"></div>
+    </div>
+    <div class="relative z-10 text-center">
+        <div class="inline-block bg-white bg-opacity-20 backdrop-blur-sm px-6 py-2 rounded-full mb-4">
+            <span class="text-white font-bold text-sm uppercase tracking-wider">{{ active_banner.badge_text }}</span>
+        </div>
+        <h2 class="text-4xl font-black text-white mb-3 drop-shadow-lg">{{ active_banner.title }}</h2>
+        <p class="text-white text-lg mb-6 font-medium">{{ active_banner.description }}</p>
+        <div class="flex flex-wrap justify-center gap-4 mb-4">
+            {% for coupon in active_banner.coupons %}
+            <div class="bg-white rounded-lg px-6 py-4 shadow-lg transform hover:scale-105 transition-all">
+                <div class="text-2xl font-black text-gray-800 mb-1">{{ coupon.code }}</div>
+                <div class="text-sm text-gray-600 font-semibold">{{ coupon.discount_text }}</div>
+                <div class="text-xs text-gray-500 mt-1">Min. KSh {{ coupon.min_purchase|int }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="text-white text-sm font-medium">{{ active_banner.footer_text }}</p>
+    </div>
+</div>
+{% endif %}
+
 <!-- Categories Section -->
 <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
     <a href="/products?category=dresses" class="bg-orange-100 rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all group">
