@@ -12,6 +12,17 @@
         <div class="absolute inset-0 bg-gradient-to-br from-orange-300 via-red-300 to-pink-300"></div>
         <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.3) 2px, transparent 2px), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.3) 2px, transparent 2px); background-size: 40px 40px;"></div>
     </div>
+    <!-- Update Notification Banner -->
+    <div id="updateBanner" class="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-4 text-center relative">
+        <div class="max-w-7xl mx-auto flex items-center justify-center">
+            <span class="text-sm md:text-base font-semibold">🎉 New Update: Improved pricing system! Lower fees + better coupon handling.</span>
+            <button onclick="closeBanner()" class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
     <nav class="bg-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center py-4">
@@ -176,6 +187,22 @@
     </div>
 
     <script>
+    // Banner management
+    function closeBanner() {
+        document.getElementById('updateBanner').style.display = 'none';
+        localStorage.setItem('bannerClosed', 'true');
+    }
+    // Auto-hide banner after 10 seconds
+    setTimeout(() => {
+        if (!localStorage.getItem('bannerClosed')) {
+            closeBanner();
+        }
+    }, 10000);
+    // Check if banner was already closed
+    if (localStorage.getItem('bannerClosed') === 'true') {
+        document.getElementById('updateBanner').style.display = 'none';
+    }
+    
     function toggleMenu() {
         document.getElementById('mobile-menu').classList.toggle('hidden');
     }
